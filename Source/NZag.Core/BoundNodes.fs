@@ -3,11 +3,12 @@
 open System.Text
 open NZag.Utilities
 
+[<Struct>]
 type Constant =
-    | Byte of byte
-    | Word of uint16
-    | Int32 of int32
-    | Text of string
+    | Byte of b: byte
+    | Word of w: uint16
+    | Int32 of i: int32
+    | Text of t: string
 
 [<AutoOpen>]
 module ConstantPatterns =
@@ -121,7 +122,7 @@ type Expression =
     | NumberToTextExpr of Expression
 
     /// Calls the routine at the specified address with the list of given arguments
-    | CallExpr of Expression * list<Expression>
+    | CallExpr of Expression * Expression[]
 
     /// Returns the number of arguments passed to the current routine
     | ArgCountExpr
@@ -251,7 +252,7 @@ type Statement =
     | ShowStatusStmt
 
     /// Outputs the text represented by the given expression for debugging
-    | DebugOutputStmt of Expression * list<Expression>
+    | DebugOutputStmt of Expression * Expression[]
 
     /// Throws a runtime exception
     | RuntimeExceptionStmt of string
@@ -286,10 +287,10 @@ module BoundNodeConstruction =
     let inline (.>.) l r = BinaryOperationKind.GreaterThan |> binaryOp l r
     let inline (.>=.) l r = BinaryOperationKind.AtLeast |> binaryOp l r
 
-    let byteConst v = ConstantExpr(Byte(v))
-    let wordConst v = ConstantExpr(Word(v))
-    let int32Const v = ConstantExpr(Int32(v))
-    let textConst v = ConstantExpr(Text(v))
+    let byteConst v = ConstantExpr(Byte v)
+    let wordConst v = ConstantExpr(Word v)
+    let int32Const v = ConstantExpr(Int32 v)
+    let textConst v = ConstantExpr(Text v)
 
     let zero = int32Const 0
     let one = int32Const 1
@@ -331,7 +332,7 @@ module ConversionPatterns =
 module ConstantExprPatterns =
 
     let (|ByteConst|_|) = function
-        | ConstantExpr(Byte(b)) -> Some(b)
+        | ConstantExpr(Byte b) -> Some(b)
         | _ -> None
 
 module BoundNodeVisitors =
@@ -341,9 +342,9 @@ module BoundNodeVisitors =
 
         match expr with
         | ConstantExpr(c) ->
-            fexpr (ConstantExpr(c))
+            fexpr (ConstantExpr c)
         | TempExpr(i) ->
-            fexpr (TempExpr(i))
+            fexpr (TempExpr i)
         | ReadLocalExpr(e) ->
             fexpr (ReadLocalExpr(rewriteExpr e))
         | ReadGlobalExpr(e) ->
@@ -363,7 +364,7 @@ module BoundNodeVisitors =
         | NumberToTextExpr(e) ->
             fexpr (NumberToTextExpr(rewriteExpr e))
         | CallExpr(e,elist) ->
-            fexpr (CallExpr(rewriteExpr e, elist |> List.map rewriteExpr))
+            fexpr (CallExpr(rewriteExpr e, elist |> Array.map rewriteExpr))
         | ArgCountExpr ->
             fexpr ArgCountExpr
         | ReadMemoryByteExpr(e) ->
@@ -401,11 +402,11 @@ module BoundNodeVisitors =
 
         match stmt with
         | LabelStmt(i) ->
-            fstmt (LabelStmt(i))
+            fstmt (LabelStmt i)
         | ReturnStmt(e) ->
             fstmt (ReturnStmt(rewriteExpr e))
         | JumpStmt(i) ->
-            fstmt (JumpStmt(i))
+            fstmt (JumpStmt i)
         | BranchStmt(b,e,s) ->
             fstmt (BranchStmt(b, rewriteExpr e, rewriteStmt s))
         | QuitStmt ->
@@ -455,9 +456,9 @@ module BoundNodeVisitors =
         | ShowStatusStmt ->
             fstmt (ShowStatusStmt)
         | DebugOutputStmt(e, elist) ->
-            fstmt (DebugOutputStmt(rewriteExpr e, elist |> List.map rewriteExpr))
+            fstmt (DebugOutputStmt(rewriteExpr e, elist |> Array.map rewriteExpr))
         | RuntimeExceptionStmt(s) ->
-            fstmt (RuntimeExceptionStmt(s))
+            fstmt (RuntimeExceptionStmt s)
 
     let rec rewriteTree fstmt fexpr tree : BoundTree =
         let rewriteStmt = rewriteStatement fstmt fexpr
@@ -506,7 +507,7 @@ module BoundNodeVisitors =
                 visitExpr e4
             | CallExpr(e,elist) ->
                 visitExpr e
-                elist |> List.iter visitExpr
+                elist |> Array.iter visitExpr
 
     let rec visitStatement fstmt fexpr stmt =
         let visitStmt = visitStatement fstmt fexpr
@@ -554,7 +555,7 @@ module BoundNodeVisitors =
                 visitExpr e4
             | DebugOutputStmt(e, elist) ->
                 visitExpr e
-                elist |> List.iter visitExpr
+                elist |> Array.iter visitExpr
 
     let visitTree fstmt fexpr tree =
         let visitStmt = visitStatement fstmt fexpr
@@ -899,8 +900,10 @@ type BoundNodeDumper (builder : StringBuilder) =
             dumpExpression a
             append " "
             parenthesize (fun () ->
-                args |> List.iteri (fun i v -> if i > 0 then append ", "
-                                               dumpExpression v))
+                args |> Array.iteri (fun i v -> 
+                    if i > 0 then append ", "
+                    dumpExpression v)
+                )
         | ArgCountExpr ->
             append "arg-count"
         | ReadMemoryByteExpr(e) ->
@@ -1095,8 +1098,10 @@ type BoundNodeDumper (builder : StringBuilder) =
             dumpExpression e
             append " "
             parenthesize (fun () ->
-                args |> List.iteri (fun i v -> if i > 0 then append ", "
-                                               dumpExpression v))
+                args |> Array.iteri (fun i v -> 
+                    if i > 0 then append ", "
+                    dumpExpression v)
+                )
 
     member x.Dump tree =
         appendf "# temps: %d" tree.TempCount

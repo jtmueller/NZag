@@ -9,14 +9,13 @@ namespace NZag.Extensions
         private static T FindFirstVisualChildAux<T>(DependencyObject obj, Func<T, bool> predicate)
             where T : DependencyObject
         {
-            var childCount = VisualTreeHelper.GetChildrenCount(obj);
+            int childCount = VisualTreeHelper.GetChildrenCount(obj);
 
             for (int i = 0; i < childCount; i++)
             {
                 var child = VisualTreeHelper.GetChild(obj, i);
 
-                var typedChild = child as T;
-                if (typedChild != null)
+                if (child is T typedChild)
                 {
                     if (predicate(typedChild))
                     {
@@ -25,7 +24,7 @@ namespace NZag.Extensions
                 }
                 else
                 {
-                    var foundChild = FindFirstVisualChildAux<T>(child, predicate);
+                    var foundChild = FindFirstVisualChildAux(child, predicate);
                     if (foundChild != null)
                     {
                         return foundChild;
@@ -38,7 +37,7 @@ namespace NZag.Extensions
 
         public static T FindFirstVisualChild<T>(this DependencyObject obj, Func<T, bool> predicate = null) where T : DependencyObject
         {
-            predicate = predicate ?? (_ => true);
+            predicate ??= (_ => true);
 
             return FindFirstVisualChildAux(obj, predicate);
         }

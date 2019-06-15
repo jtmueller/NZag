@@ -67,11 +67,12 @@ module Optimization =
 
         let getOrAddTemp t =
             match temps |> Dictionary.tryFind t with
-            | Some(t) -> t
-            | None    -> let newTemp = !nextTempIndex
-                         temps |> Dictionary.add t newTemp
-                         incr nextTempIndex
-                         newTemp
+            | ValueSome t -> t
+            | ValueNone   -> 
+                let newTemp = !nextTempIndex
+                temps |> Dictionary.add t newTemp
+                incr nextTempIndex
+                newTemp
 
         // Rewrite the tree's statements, replacing old temps with new ones
         let rewriteTemps s =

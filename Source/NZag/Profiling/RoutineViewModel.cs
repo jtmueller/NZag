@@ -1,5 +1,5 @@
-﻿using System;
-using SimpleMVVM;
+﻿using SimpleMVVM;
+using System;
 
 namespace NZag.Profiling
 {
@@ -20,33 +20,24 @@ namespace NZag.Profiling
 
         public RoutineViewModel(int address, TimeSpan compileTime, int ilByteSize, int localCount, int instructionCount)
         {
-            this.Address = address;
-            this.InitialCompileTime = compileTime;
-            this.LocalCount = localCount;
-            this.InstructionCount = instructionCount;
-            this.ILByteSize = ilByteSize;
+            Address = address;
+            InitialCompileTime = compileTime;
+            LocalCount = localCount;
+            InstructionCount = instructionCount;
+            ILByteSize = ilByteSize;
         }
 
-        public void IncrementInvocationCount()
-        {
-            this.InvocationCount += 1;
-        }
+        public void IncrementInvocationCount() => InvocationCount += 1;
 
         public void Recompiled(TimeSpan compileTime, int ilByteSize)
         {
-            this.IsOptimized = true;
-            this.OptimizedCompileTime = compileTime;
-            this.OptimizedILByteSize = ilByteSize;
+            IsOptimized = true;
+            OptimizedCompileTime = compileTime;
+            OptimizedILByteSize = ilByteSize;
         }
 
-        public double OptimizedILByteSizePercentage
-        {
-            get { return ((double)this.OptimizedILByteSize / (double)this.ILByteSize) * 100; }
-        }
+        public double OptimizedILByteSizePercentage => (OptimizedILByteSize / (double)ILByteSize) * 100;
 
-        public string OptimizedILByteSizeDisplay
-        {
-            get { return string.Format("{0:#,0} ({1:0.00}%)", this.OptimizedILByteSize, this.OptimizedILByteSizePercentage); }
-        }
+        public string OptimizedILByteSizeDisplay => String.Format("{0:#,0} ({1:0.00}%)", OptimizedILByteSize, OptimizedILByteSizePercentage);
     }
 }

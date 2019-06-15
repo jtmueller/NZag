@@ -125,7 +125,7 @@ type Machine (memory: Memory, debugging: bool) as this =
 
     member x.RunAsync() =
         async {
-            let reader = new RoutineReader(memory)
+            //let reader = new RoutineReader(memory)
             let invoker = getInvoker mainRoutineAddress
             let stack = Array.zeroCreate 1024
             invoker.Invoke0(memory, stack, 0) |> ignore
@@ -200,7 +200,7 @@ type Machine (memory: Memory, debugging: bool) as this =
 
             if memory.Version < 5 then
                 routine.Locals
-                |> List.iteri (fun i v -> if v > 0us then result.[i] <- v)
+                |> Array.iteri (fun i v -> if v > 0us then result.[i] <- v)
 
             result
 

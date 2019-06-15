@@ -398,8 +398,7 @@ type CodeGenerator private (tree: BoundTree, machine: IMachine, builder: ILBuild
     and emitCallSiteInvoke args =
         // NOTE: At this point a ZFuncCallSite should already be on the stack
 
-        args
-        |> List.iter (fun a -> emitExpression a)
+        args |> Array.iter (fun a -> emitExpression a)
 
         // The memory, stack and SP are the last arguments passed in case any arguments
         // manipulate them (e.g. globals, push/pop SP).

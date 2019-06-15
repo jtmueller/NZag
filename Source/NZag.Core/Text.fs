@@ -1,5 +1,7 @@
 ﻿namespace NZag.Core
 
+open System
+open System.Text
 open System.Collections.Generic
 open NZag.Utilities
 
@@ -21,7 +23,7 @@ type AlphabetTable (memory : Memory) =
         let readAlphabet address length =
             // Every "alphabet" is 32 characters long.
             let buffer = Array.zeroCreate 32
-            memory.Read buffer (32 - length) length address
+            memory.Read(buffer.AsSpan(), 32 - length, length, address)
             buffer |> Array.map byteToChar
 
         // The last "alphabet" is 25 characters long to account for the fact that A2/C6
@@ -58,6 +60,12 @@ type AlphabetTable (memory : Memory) =
         baseAlphabet := (!baseAlphabet + 2) % 3
         currentAlphabet := !baseAlphabet
 
+    member x.Item
+        with get (zchar: ZChar) =
+            let result = alphabets.[!currentAlphabet].[int zchar]
+            currentAlphabet := !baseAlphabet
+            result
+
     member x.GetChar (zchar : ZChar) =
         let result = alphabets.[!currentAlphabet].[int zchar]
         currentAlphabet := !baseAlphabet
@@ -66,14 +74,12 @@ type AlphabetTable (memory : Memory) =
     member x.FindSetAndIndex ch =
         alphabets
         |> Seq.mapi (fun set arr ->
-            arr
-            |> Seq.mapi (fun index c -> (set,index,c)))
+            arr |> Seq.mapi (fun index c -> struct(set,index,c)))
         |> Seq.concat
-        |> Seq.tryFind (fun (set,index,c) -> c = ch)
-        |> (fun res ->
-            match res with
-            | Some(set,index,c) -> Some(byte set, byte index)
-            | None -> None)
+        |> Seq.tryFind (fun struct(_,_,c) -> c = ch)
+        |> (function
+            | Some(set,index,_) -> ValueSome(byte set, byte index)
+            | None -> ValueNone)
 
     member x.CurrentAlphabet = !currentAlphabet
     member x.Version = memory.Version
@@ -123,8 +129,8 @@ module private ZText =
         builder.ToString()
 
     let readStringOfLength (length: int) (charProcessor: ICharProcessor) (reader: IMemoryReader) =
-        let builder = StringBuilder.create()
-        let zcharEnum = readZCharsWithLength length reader |> Enumerable.getEnumerator
+        let builder = new StringBuilder(length)
+        use zcharEnum = readZCharsWithLength length reader |> Enumerable.getEnumerator
 
         charProcessor.Reset()
         while charProcessor.TryProcessNext builder zcharEnum do ()
@@ -135,16 +141,18 @@ module private ZText =
         // TODO(DustinCa): Handle unicode, mouse clicks, etc.
         uint16 ch
 
-    let encodeZText (alphabetTable: AlphabetTable) (text: string) =
+    let encodeZText (alphabetTable: AlphabetTable) (text: ReadOnlySpan<char>) =
         let version = alphabetTable.Version
         let resolution = if version <= 3 then 2 else 3
 
         let text =
-            match text with
-            | "g"  -> "again"
-            | "x"  -> "examine"
-            | "z"  -> "wait"
-            | text -> text
+            if text.Length = 0 then text
+            else
+                match text.[0] with
+                | 'g'  -> "again".AsSpan()
+                | 'x'  -> "examine".AsSpan()
+                | 'z'  -> "wait".AsSpan()
+                | _ -> text
 
         let length = resolution * 3
         let address = ref 0
@@ -164,13 +172,13 @@ module private ZText =
                     writeByte 0uy
                 else
                     match alphabetTable.FindSetAndIndex ch with
-                    | Some(set, index) ->
+                    | ValueSome(set, index) ->
                         if set <> 0uy then
                             let b = if version <= 2 then 1uy else 3uy
                             writeByte (b + set)
 
                         writeByte index
-                    | None ->
+                    | ValueNone ->
                         let zchar = translateToZscii ch
                         writeByte 5uy
                         writeByte 6uy
@@ -209,7 +217,7 @@ type CharProcessor (memory: Memory, ?abbreviationReader: AbbreviationReader) =
 
         // The next two characters make up a 10-bit ZSCII character
         match zcharEnum.Next(), zcharEnum.Next() with
-        | Some(zc1), Some(zc2) ->
+        | ValueSome(zc1), ValueSome(zc2) ->
             let zscii = ((uint16 zc1 &&& 0x1fus) <<< 5) ||| uint16 zc2
             builder |> StringBuilder.appendChar (char zscii)
         | _ ->
@@ -222,16 +230,16 @@ type CharProcessor (memory: Memory, ?abbreviationReader: AbbreviationReader) =
             failcompile "Encounted ZSCII code for an illegal abbreviation."
 
         match zcharEnum.Next() with
-        | Some(code) ->
+        | ValueSome(code) ->
             let index = (32 * (offset - 1)) + int code
             let abbreviation = abbreviationReader.Value.GetAbbreviation(index)
             builder |> StringBuilder.appendString abbreviation
-        | None -> ()
+        | ValueNone -> ()
 
     let processChar_v1 builder zcharEnum (zchar: ZChar) =
         match zchar with
-        | 0uy -> builder|> StringBuilder.appendChar(' ')
-        | 1uy -> builder|> StringBuilder.appendChar('\n')
+        | 0uy -> builder |> StringBuilder.appendChar(' ')
+        | 1uy -> builder |> StringBuilder.appendChar('\n')
         | 2uy -> alphabetTable.Shift()
         | 3uy -> alphabetTable.DoubleShift()
         | 4uy -> alphabetTable.ShiftLock()
@@ -242,7 +250,7 @@ type CharProcessor (memory: Memory, ?abbreviationReader: AbbreviationReader) =
 
     let processChar_v2 builder zcharEnum (zchar: ZChar) =
         match zchar with
-        | 0uy -> builder|> StringBuilder.appendChar(' ')
+        | 0uy -> builder |> StringBuilder.appendChar(' ')
         | 1uy -> builder |> appendAbbreviation zcharEnum 1
         | 2uy -> alphabetTable.Shift()
         | 3uy -> alphabetTable.DoubleShift()
@@ -254,7 +262,7 @@ type CharProcessor (memory: Memory, ?abbreviationReader: AbbreviationReader) =
 
     let processChar_v3 builder zcharEnum (zchar: ZChar) =
         match zchar with
-        | 0uy -> builder|> StringBuilder.appendChar(' ')
+        | 0uy -> builder |> StringBuilder.appendChar(' ')
         | 1uy -> builder |> appendAbbreviation zcharEnum 1
         | 2uy -> builder |> appendAbbreviation zcharEnum 2
         | 3uy -> builder |> appendAbbreviation zcharEnum 3
@@ -277,9 +285,10 @@ type CharProcessor (memory: Memory, ?abbreviationReader: AbbreviationReader) =
 
         member x.TryProcessNext builder zcharEnum =
             match zcharEnum.Next() with
-            | Some(zc) -> zc |> processChar builder zcharEnum 
-                          true
-            | None     -> false
+            | ValueSome zc -> 
+                zc |> processChar builder zcharEnum 
+                true
+            | _ -> false
 
 and AbbreviationReader (memory: Memory) =
 

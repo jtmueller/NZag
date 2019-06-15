@@ -1,9 +1,9 @@
-﻿using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Media;
-using NZag.Services;
+﻿using NZag.Services;
 using NZag.Utilities;
 using SimpleMVVM.Threading;
+using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace NZag.Windows
 {
@@ -17,9 +17,9 @@ namespace NZag.Windows
 
         protected ZWindow(ZWindowManager manager, FontAndColorService fontAndColorService)
         {
-            this.Manager = manager;
+            Manager = manager;
             this.fontAndColorService = fontAndColorService;
-            this.foregroundThreadAffinitizedObject = new ForegroundThreadAffinitizedObject();
+            foregroundThreadAffinitizedObject = new ForegroundThreadAffinitizedObject();
 
             UseLayoutRounding = true;
             SnapsToDevicePixels = true;
@@ -28,135 +28,72 @@ namespace NZag.Windows
             TextOptions.SetTextRenderingMode(this, TextRenderingMode.Auto);
         }
 
-        protected void AssertIsForeground()
-        {
-            this.foregroundThreadAffinitizedObject.AssertIsForeground();
-        }
+        protected void AssertIsForeground() => foregroundThreadAffinitizedObject.AssertIsForeground();
 
-        public ZPairWindow ParentWindow
-        {
-            get { return this.parentWindow; }
-        }
+        public ZPairWindow ParentWindow => parentWindow;
 
-        protected Brush ForegroundBrush
-        {
-            get { return this.fontAndColorService.ForegroundBrush; }
-        }
+        protected Brush ForegroundBrush => fontAndColorService.ForegroundBrush;
 
-        protected Brush BackgroundBrush
-        {
-            get { return this.fontAndColorService.BackgroundBrush; }
-        }
+        protected Brush BackgroundBrush => fontAndColorService.BackgroundBrush;
 
-        protected double FontSize
-        {
-            get { return this.fontAndColorService.FontSize; }
-        }
+        protected double FontSize => fontAndColorService.FontSize;
 
-        public void SetParentWindow(ZPairWindow newParentWindow)
-        {
-            this.parentWindow = newParentWindow;
-        }
+        public void SetParentWindow(ZPairWindow newParentWindow) => parentWindow = newParentWindow;
 
-        public void Activate()
-        {
-            this.Manager.ActivateWindow(this);
-        }
+        public void Activate() => Manager.ActivateWindow(this);
 
-        public virtual bool SetBold(bool value)
-        {
-            return false;
-        }
+        public virtual bool SetBold(bool value) => false;
 
-        public virtual bool SetItalic(bool value)
-        {
-            return false;
-        }
+        public virtual bool SetItalic(bool value) => false;
 
-        public virtual bool SetFixedPitch(bool value)
-        {
-            return false;
-        }
+        public virtual bool SetFixedPitch(bool value) => false;
 
-        public virtual bool SetReverse(bool value)
-        {
-            return false;
-        }
+        public virtual bool SetReverse(bool value) => false;
 
-        public virtual void Clear()
-        {
-            throw new Exceptions.RuntimeException("Window does not support clear operation.");
-        }
+        public virtual void Clear() => throw new Exceptions.RuntimeException("Window does not support clear operation.");
 
-        protected virtual Task<char> ReadCharCoreAsync()
-        {
-            throw new Exceptions.RuntimeException("Window does not support user input.");
-        }
+        protected virtual Task<char> ReadCharCoreAsync() => throw new Exceptions.RuntimeException("Window does not support user input.");
 
         public Task<char> ReadCharAsync()
         {
-            return this.foregroundThreadAffinitizedObject.InvokeBelowInputPriority(() =>
+            return foregroundThreadAffinitizedObject.InvokeBelowInputPriority(() =>
             {
                 return ReadCharCoreAsync();
             }).Unwrap();
         }
 
-        protected virtual Task<string> ReadTextCoreAsync(int maxChars)
-        {
-            throw new Exceptions.RuntimeException("Window does not support user input.");
-        }
+        protected virtual Task<string> ReadTextCoreAsync(int maxChars) => throw new Exceptions.RuntimeException("Window does not support user input.");
 
         public Task<string> ReadTextAsync(int maxChars)
         {
-            return this.foregroundThreadAffinitizedObject.InvokeBelowInputPriority(() =>
+            return foregroundThreadAffinitizedObject.InvokeBelowInputPriority(() =>
             {
                 return ReadTextCoreAsync(maxChars);
             }).Unwrap();
         }
 
-        public virtual void PutChar(char ch, bool forceFixedWidthFont)
-        {
-            throw new Exceptions.RuntimeException("Window does not support text display.");
-        }
+        public virtual void PutChar(char ch, bool forceFixedWidthFont) => throw new Exceptions.RuntimeException("Window does not support text display.");
 
-        public virtual void PutText(string text, bool forceFixedWidthFont)
-        {
-            throw new Exceptions.RuntimeException("Window does not support text display.");
-        }
+        public virtual void PutText(string text, bool forceFixedWidthFont) => throw new Exceptions.RuntimeException("Window does not support text display.");
 
-        public virtual int GetHeight()
-        {
-            return 0;
-        }
+        public virtual int GetHeight() => 0;
 
         public virtual void SetHeight(int lines)
         {
             // Do nothing in base implementation.
         }
 
-        public virtual int GetCursorColumn()
-        {
-            return 0;
-        }
+        public virtual int GetCursorColumn() => 0;
 
-        public virtual int GetCursorLine()
-        {
-            return 0;
-        }
+        public virtual int GetCursorLine() => 0;
 
         public virtual void SetCursorAsync(int line, int column)
         {
             // Do nothing in base implementation.
         }
 
-        public virtual int RowHeight
-        {
-            get { return 0; }
-        }
+        public virtual int RowHeight => 0;
 
-        public virtual int ColumnWidth
-        {
-            get { return 0; }
-        }
+        public virtual int ColumnWidth => 0;
     }
 }

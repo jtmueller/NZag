@@ -8,26 +8,22 @@ namespace NZag.Controls
 {
     public class ZTextGrid : FrameworkElement
     {
-        private readonly VisualCollection visuals;
-        private readonly SortedList<Tuple<int, int>, VisualPair> visualPairs;
+        private readonly VisualCollection _visuals;
+        private readonly SortedList<Tuple<int, int>, VisualPair> _visualPairs;
 
-        private readonly double fontSize;
-        private readonly Size fontCharSize;
-
-        private int cursorLine;
-        private int cursorColumn;
-
+        private readonly double _fontSize;
+        private readonly Size _fontCharSize;
         private Typeface typeface;
-        private bool bold;
-        private bool italic;
-        private bool reverse;
+        private bool _bold;
+        private bool _italic;
+        private bool _reverse;
 
         public ZTextGrid(double fontSize)
         {
-            this.visuals = new VisualCollection(this);
-            this.visualPairs = new SortedList<Tuple<int, int>, VisualPair>();
+            _visuals = new VisualCollection(this);
+            _visualPairs = new SortedList<Tuple<int, int>, VisualPair>();
 
-            this.fontSize = fontSize;
+            _fontSize = fontSize;
 
             var zero = new FormattedText(
                 textToFormat: "0",
@@ -35,17 +31,18 @@ namespace NZag.Controls
                 flowDirection: FlowDirection.LeftToRight,
                 typeface: GetTypeface(),
                 emSize: fontSize,
-                foreground: Brushes.Black);
+                foreground: Brushes.Black,
+                pixelsPerDip: 1.0);
 
-            this.fontCharSize = new Size(zero.Width, zero.Height);
+            _fontCharSize = new Size(zero.Width, zero.Height);
         }
 
         private Typeface GetTypeface()
         {
             if (typeface == null)
             {
-                var style = this.italic ? FontStyles.Italic : FontStyles.Normal;
-                var weight = bold ? FontWeights.Bold : FontWeights.Normal;
+                var style = _italic ? FontStyles.Italic : FontStyles.Normal;
+                var weight = _bold ? FontWeights.Bold : FontWeights.Normal;
                 typeface = new Typeface(new FontFamily("Consolas"), style, weight, stretch: FontStretches.Normal);
             }
 
@@ -54,48 +51,48 @@ namespace NZag.Controls
 
         public void Clear()
         {
-            this.visuals.Clear();
-            this.visualPairs.Clear();
-            this.cursorColumn = 0;
-            this.cursorLine = 0;
+            _visuals.Clear();
+            _visualPairs.Clear();
+            CursorColumn = 0;
+            CursorLine = 0;
         }
 
         public void PutChar(char ch, Brush foregroundBrush, Brush backgroundBrush)
         {
             if (ch == '\n')
             {
-                this.cursorLine += 1;
-                this.cursorColumn = 0;
+                CursorLine += 1;
+                CursorColumn = 0;
             }
             else
             {
                 // First, see if we've already inserted something at this position.
                 // If so, delete the old visuals.
-                var cursorPos = Tuple.Create(this.cursorColumn, this.cursorLine);
-                if (this.visualPairs.ContainsKey(cursorPos))
+                var cursorPos = Tuple.Create(CursorColumn, CursorLine);
+                if (_visualPairs.ContainsKey(cursorPos))
                 {
-                    var visualPair = this.visualPairs[cursorPos];
-                    this.visuals.Remove(visualPair.Background);
-                    this.visuals.Remove(visualPair.Character);
-                    this.visualPairs.Remove(cursorPos);
+                    var visualPair = _visualPairs[cursorPos];
+                    _visuals.Remove(visualPair.Background);
+                    _visuals.Remove(visualPair.Character);
+                    _visualPairs.Remove(cursorPos);
                 }
 
                 var backgroundVisual = new DrawingVisual();
                 var backgroundContext = backgroundVisual.RenderOpen();
 
-                var x = fontCharSize.Width * cursorColumn;
-                var y = fontCharSize.Height * cursorLine;
+                double x = _fontCharSize.Width * CursorColumn;
+                double y = _fontCharSize.Height * CursorLine;
 
                 var backgroundRect = new Rect(
                     Math.Floor(x),
                     Math.Floor(y),
-                    Math.Ceiling(fontCharSize.Width + 0.5),
-                    Math.Ceiling(fontCharSize.Height));
+                    Math.Ceiling(_fontCharSize.Width + 0.5),
+                    Math.Ceiling(_fontCharSize.Height));
 
                 backgroundContext.DrawRectangle(backgroundBrush, null, backgroundRect);
                 backgroundContext.Close();
 
-                this.visuals.Insert(0, backgroundVisual);
+                _visuals.Insert(0, backgroundVisual);
 
                 var textVisual = new DrawingVisual();
                 var textContext = textVisual.RenderOpen();
@@ -106,80 +103,65 @@ namespace NZag.Controls
                         CultureInfo.InstalledUICulture,
                         FlowDirection.LeftToRight,
                         GetTypeface(),
-                        this.fontSize,
+                        _fontSize,
                         foregroundBrush,
                         new NumberSubstitution(NumberCultureSource.User, CultureInfo.InstalledUICulture, NumberSubstitutionMethod.AsCulture),
-                        TextFormattingMode.Display),
+                        TextFormattingMode.Display, 1.0),
                     new Point(x, y));
 
                 textContext.Close();
 
-                this.visuals.Add(textVisual);
+                _visuals.Add(textVisual);
 
                 var newVisualPair = new VisualPair(backgroundVisual, textVisual);
-                this.visualPairs.Add(cursorPos, newVisualPair);
+                _visualPairs.Add(cursorPos, newVisualPair);
 
-                this.cursorColumn += 1;
+                CursorColumn += 1;
             }
         }
 
         public void SetBold(bool value)
         {
-            this.bold = value;
-            this.typeface = null;
+            _bold = value;
+            typeface = null;
         }
 
         public void SetItalic(bool value)
         {
-            this.italic = value;
-            this.typeface = null;
+            _italic = value;
+            typeface = null;
         }
 
-        public void SetReverse(bool value)
-        {
-            this.reverse = value;
-        }
+        public void SetReverse(bool value) => _reverse = value;
 
-        public int CursorColumn
-        {
-            get { return this.cursorColumn; }
-        }
+        public int CursorColumn { get; private set; }
 
-        public int CursorLine
-        {
-            get { return this.cursorLine; }
-        }
+        public int CursorLine { get; private set; }
 
         public void SetCursor(int line, int column)
         {
-            this.cursorLine = line;
-            this.cursorColumn = column;
+            CursorLine = line;
+            CursorColumn = column;
         }
 
         public void SetHeight(int lines)
         {
-            for (int i = this.visualPairs.Count - 1; i >= 0; i--)
+            for (int i = _visualPairs.Count - 1; i >= 0; i--)
             {
-                var cursorPos = this.visualPairs.Keys[i];
-                var y = cursorPos.Item2;
+                var cursorPos = _visualPairs.Keys[i];
+                int y = cursorPos.Item2;
                 if (y > lines - 1)
                 {
-                    var visualPair = visualPairs[cursorPos];
-                    this.visuals.Remove(visualPair.Background);
-                    this.visuals.Remove(visualPair.Character);
-                    this.visualPairs.Remove(cursorPos);
+                    var visualPair = _visualPairs[cursorPos];
+                    _visuals.Remove(visualPair.Background);
+                    _visuals.Remove(visualPair.Character);
+                    _visualPairs.Remove(cursorPos);
                 }
             }
         }
 
-        protected override Visual GetVisualChild(int index)
-        {
-            return this.visuals[index];
-        }
+        protected override Visual GetVisualChild(int index) => _visuals[index];
 
-        protected override int VisualChildrenCount
-        {
-            get { return this.visuals.Count; }
-        }
+        protected override int VisualChildrenCount => _visuals.Count;
     }
 }

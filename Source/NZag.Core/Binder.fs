@@ -25,18 +25,18 @@ type Binder(memory: Memory, builder: BoundTreeCreator, debugging: bool) =
 
     member x.WriteByte address value =
         WriteMemoryByteStmt(address, value)
-            |> builder.AddStatement
+        |> builder.AddStatement
     member x.WriteWord address value =
         WriteMemoryWordStmt(address, value)
-            |> builder.AddStatement
+        |> builder.AddStatement
 
     member x.DebugOut message args =
         DebugOutputStmt(textConst message, args)
-            |> builder.AddStatement
+        |> builder.AddStatement
 
     member x.RuntimeException message =
         RuntimeExceptionStmt(message)
-            |> builder.AddStatement
+        |> builder.AddStatement
 
 type ObjectBinder(memory, builder, debugging) as this =
     inherit Binder(memory, builder, debugging)
@@ -554,9 +554,9 @@ type InstructionBinder(routine: Routine, memory, builder, debugging) as this =
         // variables. If not, we can optimize by using temps for locals.
         let usesComputedVariables =
             routine.Instructions
-            |> List.exists (fun i ->
-                if i.Opcode.IsFirstOpByRef then
-                    match i.Operands.Head with
+            |> Array.exists (fun inst ->
+                if inst.Opcode.IsFirstOpByRef then
+                    match inst.Operands.[0] with
                     | VariableOperand(_) -> true
                     | _ -> false
                 else
@@ -623,8 +623,8 @@ type InstructionBinder(routine: Routine, memory, builder, debugging) as this =
         let branchIf expression =
             let branch =
                 match instruction.Branch with
-                | Some(b) -> b
-                | None -> failcompile "Expected instruction to have a valid branch."
+                | ValueSome b -> b
+                | _ -> failcompile "Expected instruction to have a valid branch."
 
             let statement =
                 match branch with
@@ -633,23 +633,23 @@ type InstructionBinder(routine: Routine, memory, builder, debugging) as this =
                 | OffsetBranch(_,_) -> JumpStmt(builder.GetJumpTargetLabel(instruction.BranchAddress.Value))
 
             BranchStmt(branch.Condition, expression, statement)
-                |> addStatement
+            |> addStatement
 
         let store expression =
             let storeVar =
                 match instruction.StoreVariable with
-                | Some(v) -> v
-                | None -> failcompile "Expected instruction to have a valid store variable."
+                | ValueSome v -> v
+                | _ -> failcompile "Expected instruction to have a valid store variable."
 
             writeVariable expression storeVar
 
         let discard expression =
             match instruction.StoreVariable with
-            | Some(_) -> failcompile "Expected instruction to not have a store variable."
-            | None -> ()
+            | ValueSome _ -> failcompile "Expected instruction to not have a store variable."
+            | _ -> ()
 
             DiscardValueStmt(expression)
-                |> addStatement
+            |> addStatement
 
         let copyTable first second size =
             ifThenElse (second .=. zero)
@@ -781,16 +781,16 @@ type InstructionBinder(routine: Routine, memory, builder, debugging) as this =
         // Create temps for all operands except constants
         let operandValues =
             instruction.Operands
-            |> List.map bindOperand
+            |> Array.map bindOperand
 
         let operands =
             operandValues
-            |> List.map (fun v ->
+            |> Array.map (fun v ->
                 match v with
                 | ConstantExpr(_) -> v
                 | _ -> !!(initTemp v))
 
-        let operandMap = List.zip operands operandValues |> Map.ofList
+        let operandMap = Seq.zip operands operandValues |> Map.ofSeq
 
         // If debugging, write the instruction to the debug output
         if debugging then
@@ -807,18 +807,18 @@ type InstructionBinder(routine: Routine, memory, builder, debugging) as this =
                 res
 
             instruction.Operands
-                |> List.iter (fun op -> 
-                    match op with
-                    | LargeConstantOperand(_) -> builder |> StringBuilder.appendString (" " + formatItem "x4")
-                    | SmallConstantOperand(_) -> builder |> StringBuilder.appendString (" " + formatItem "x2")
-                    | VariableOperand(v) ->
-                        match v with
-                        | StackVariable ->
-                            builder |> StringBuilder.appendString (" SP=" + formatItem "x")
-                        | LocalVariable(i) ->
-                            builder |> StringBuilder.appendString ((sprintf " L%02x=" i) + formatItem "x")
-                        | GlobalVariable(i) ->
-                            builder |> StringBuilder.appendString ((sprintf " G%02x=" i) + formatItem "x"))
+            |> Array.iter (fun op -> 
+                match op with
+                | LargeConstantOperand _ -> builder |> StringBuilder.appendString (" " + formatItem "x4")
+                | SmallConstantOperand _ -> builder |> StringBuilder.appendString (" " + formatItem "x2")
+                | VariableOperand v ->
+                    match v with
+                    | StackVariable ->
+                        builder |> StringBuilder.appendString (" SP=" + formatItem "x")
+                    | LocalVariable i ->
+                        builder |> StringBuilder.appendString ((sprintf " L%02x=" i) + formatItem "x")
+                    | GlobalVariable i ->
+                        builder |> StringBuilder.appendString ((sprintf " G%02x=" i) + formatItem "x"))
 
             this.DebugOut (builder.ToString()) operands
 
@@ -1027,13 +1027,13 @@ type InstructionBinder(routine: Routine, memory, builder, debugging) as this =
 
         | "je", Any, OpAndList(left, values) ->
             // je can have 2 to 4 operands to test for equality.
-            let conditions = values |> List.map (fun v -> left .=. v)
+            let conditions = values |> Array.map (fun v -> left .=. v)
 
             branchIf
-                ((List.tail conditions)
-                |> List.fold
+                ((Array.tail conditions)
+                |> Array.fold
                     (fun res c -> res .|. c)
-                    (List.head conditions))
+                    (Array.head conditions))
 
         | "jg", Any, Op2(left, right) ->
             let left = left |> toInt16

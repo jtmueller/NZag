@@ -1,8 +1,8 @@
-﻿using System;
+﻿using NZag.ViewModels;
+using System;
 using System.ComponentModel.Composition.Hosting;
 using System.Reflection;
 using System.Windows;
-using NZag.ViewModels;
 
 namespace NZag
 {
@@ -12,7 +12,7 @@ namespace NZag
         private static void Main(string[] args)
         {
             var catalog = new AssemblyCatalog(Assembly.GetExecutingAssembly());
-            var container = new CompositionContainer(catalog);
+            using var container = new CompositionContainer(catalog);
 
             var mainWindowViewModel = container.GetExportedValue<MainWindowViewModel>();
             var mainWindow = mainWindowViewModel.CreateView();

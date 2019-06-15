@@ -1,76 +1,48 @@
-﻿using System;
+﻿using NZag.Core;
+using System;
 using System.ComponentModel.Composition;
 using System.Windows.Media;
-using NZag.Core;
 
 namespace NZag.Services
 {
     [Export]
     public class FontAndColorService
     {
-        private Brush defaultForegroundBrush = Brushes.Black;
-        private Brush defaultBackgroundBrush = Brushes.White;
+        private readonly Brush _defaultForegroundBrush = Brushes.Black;
+        private readonly Brush _defaultBackgroundBrush = Brushes.White;
 
-        private Brush foregroundBrush = Brushes.Black;
-        private Brush backgroundBrush = Brushes.White;
-
-        private double fontSize = 20.0;
-
-        private static Brush GetZColorBrush(ZColor color)
+        private static Brush GetZColorBrush(ZColor color) => color switch
         {
-            switch (color)
-            {
-                case ZColor.Black:
-                    return Brushes.Black;
-                case ZColor.Blue:
-                    return Brushes.Blue;
-                case ZColor.Cyan:
-                    return Brushes.Cyan;
-                case ZColor.Gray:
-                    return Brushes.Gray;
-                case ZColor.Green:
-                    return Brushes.Green;
-                case ZColor.Magenta:
-                    return Brushes.Magenta;
-                case ZColor.Red:
-                    return Brushes.Red;
-                case ZColor.White:
-                    return Brushes.White;
-                case ZColor.Yellow:
-                    return Brushes.Yellow;
-
-                default:
-                    throw new ArgumentException("Unexpected color: " + color, "color");
-            }
-        }
+            ZColor.Black => Brushes.Black,
+            ZColor.Blue => Brushes.Blue,
+            ZColor.Cyan => Brushes.Cyan,
+            ZColor.Gray => Brushes.Gray,
+            ZColor.Green => Brushes.Green,
+            ZColor.Magenta => Brushes.Magenta,
+            ZColor.Red => Brushes.Red,
+            ZColor.White => Brushes.White,
+            ZColor.Yellow => Brushes.Yellow,
+            _ => throw new ArgumentException("Unexpected color: " + color, nameof(color))
+        };
 
         public void SetForegroundColor(ZColor foreground)
         {
-            this.foregroundBrush = foreground == ZColor.Default
-                ? this.defaultForegroundBrush
+            ForegroundBrush = foreground == ZColor.Default
+                ? _defaultForegroundBrush
                 : GetZColorBrush(foreground);
         }
 
         public void SetBackgroundColor(ZColor background)
         {
-            this.backgroundBrush = background == ZColor.Default
-                ? this.defaultBackgroundBrush
+            BackgroundBrush = background == ZColor.Default
+                ? _defaultBackgroundBrush
                 : GetZColorBrush(background);
         }
 
-        public Brush ForegroundBrush
-        {
-            get { return this.foregroundBrush; }
-        }
+        public Brush ForegroundBrush { get; private set; } = Brushes.Black;
 
-        public Brush BackgroundBrush
-        {
-            get { return this.backgroundBrush; }
-        }
+        public Brush BackgroundBrush { get; private set; } = Brushes.White;
 
-        public double FontSize
-        {
-            get { return this.fontSize; }
-        }
+        public double FontSize { get; } = 20.0;
     }
 }

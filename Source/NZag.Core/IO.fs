@@ -1,6 +1,7 @@
 ﻿namespace NZag.Core
 
 open System
+open System.Buffers
 open System.Threading.Tasks
 open NZag.Utilities
 
@@ -65,10 +66,10 @@ type IScreen =
 
 module NullInstances =
 
-    let private emptyCharTask = async { return char 0 } |> Async.StartAsTask
-    let private emptyIntTask = async { return 0 } |> Async.StartAsTask
-    let private emptyStringTask = async { return "" } |> Async.StartAsTask
-    let private emptyTask = async { return () } |> Async.StartAsPlainTask
+    let private emptyCharTask = Task.FromResult(char 0)
+    let private emptyIntTask = Task.FromResult(0)
+    let private emptyStringTask = Task.FromResult(String.Empty)
+    let private emptyTask = Task.CompletedTask
 
     let InputStream =
         { new IInputStream with
@@ -127,21 +128,22 @@ type MemoryOutputStream(memory: Memory, address: int) =
 
     interface IOutputStream with
         member x.WriteCharAsync ch =
-            async {
+            Task.Run(fun () ->
                 memory.WriteByte(writeAddress(), charToByte ch)
                 count <- count + 1us
                 writeCount()
-            }
-            |> Async.StartAsPlainTask
+            )
 
-        member x.WriteTextAsync s =
-            async {
-                let bytes = s |> String.toCharArray |> Array.map charToByte
-                memory.WriteBytes(writeAddress(), bytes)
-                count <- count + (uint16 bytes.Length)
+        member x.WriteTextAsync(s: string) =
+            Task.Run(fun () ->
+                let chars = s.AsSpan()
+                let buffer = ArrayPool<byte>.Shared.Rent(chars.Length)
+                for i = 0 to chars.Length - 1 do
+                    buffer.[i] <- charToByte chars.[i]
+                memory.WriteBytes(writeAddress(), ReadOnlySpan(buffer, 0, chars.Length))
+                count <- count + (uint16 chars.Length)
                 writeCount()
-            }
-            |> Async.StartAsPlainTask
+            )
 
 type OutputStreamCollection(memory: Memory) =
     let memoryStreams = Stack.create()
@@ -198,7 +200,7 @@ type OutputStreamCollection(memory: Memory) =
                 elif transcriptActive then
                     transcriptStream.WriteCharAsync(ch)
                 else
-                    async { return () } |> Async.StartAsPlainTask
+                    Task.CompletedTask
             else
                 memoryStreams |> Stack.peek |> (fun stream -> stream.WriteCharAsync(ch))
 
@@ -209,6 +211,6 @@ type OutputStreamCollection(memory: Memory) =
                 elif transcriptActive then
                     transcriptStream.WriteTextAsync(s)
                 else
-                    async { return () } |> Async.StartAsPlainTask
+                    Task.CompletedTask
             else
                 memoryStreams |> Stack.peek |> (fun stream -> stream.WriteTextAsync(s))

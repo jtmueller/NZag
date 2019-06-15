@@ -59,7 +59,7 @@ Public Class MemoryTests
         Next
 
         'Read bytes
-        Dim bytes = memory.ReadBytes(&H40, length)
+        Dim bytes = memory.ReadBytes(&H40, length).ToArray()
 
         Assert.NotNull(bytes)
         Assert.Equal(length, bytes.Length)
@@ -127,6 +127,30 @@ Public Class MemoryTests
         For i = 0 To length - 1
             Dim b = i Mod Byte.MaxValue
             Dim v = reader.NextByte()
+            Assert.Equal(b, v)
+        Next
+    End Sub
+
+    <Fact>
+    Sub MemoryReader_NextBytes()
+        Dim memory = CreateMemory(8, &H30000)
+
+        ' Write bytes
+        Const length As Integer = &H30000 - &H40
+        For i = 0 To length - 1
+            Dim a = &H40 + i
+            memory.WriteByte(a, CByte(i Mod Byte.MaxValue))
+        Next
+
+        'Read bytes
+        Dim reader = memory.CreateMemoryReader(&H40)
+        Dim bytes = reader.NextBytes(length).ToArray()
+
+        Assert.Equal(length, bytes.Length)
+
+        For i = 0 To length - 1
+            Dim b = i Mod Byte.MaxValue
+            Dim v = bytes(i)
             Assert.Equal(b, v)
         Next
     End Sub

@@ -1,14 +1,11 @@
-﻿using System.Windows;
+﻿using NZag.Services;
+using System.Windows;
 using System.Windows.Controls;
-using NZag.Services;
 
 namespace NZag.Windows
 {
     internal class ZPairWindow : ZWindow
     {
-        private ZWindow child1;
-        private ZWindow child2;
-
         public ZPairWindow(
             ZWindowManager manager,
             FontAndColorService fontAndColorService,
@@ -18,70 +15,64 @@ namespace NZag.Windows
             GridLength child2Size)
             : base(manager, fontAndColorService)
         {
-            this.child1 = child1;
-            this.child2 = child2;
+            Child1 = child1;
+            Child2 = child2;
 
             switch (child2Position)
             {
                 case ZWindowPosition.Left:
-                    this.ColumnDefinitions.Add(new ColumnDefinition { Width = child2Size });
-                    this.ColumnDefinitions.Add(new ColumnDefinition());
-                    SetColumn(this.child1, 1);
-                    SetColumn(this.child2, 0);
+                    ColumnDefinitions.Add(new ColumnDefinition { Width = child2Size });
+                    ColumnDefinitions.Add(new ColumnDefinition());
+                    SetColumn(Child1, 1);
+                    SetColumn(Child2, 0);
                     break;
                 case ZWindowPosition.Right:
-                    this.ColumnDefinitions.Add(new ColumnDefinition());
-                    this.ColumnDefinitions.Add(new ColumnDefinition { Width = child2Size });
-                    SetColumn(this.child1, 0);
-                    SetColumn(this.child2, 1);
+                    ColumnDefinitions.Add(new ColumnDefinition());
+                    ColumnDefinitions.Add(new ColumnDefinition { Width = child2Size });
+                    SetColumn(Child1, 0);
+                    SetColumn(Child2, 1);
                     break;
                 case ZWindowPosition.Above:
-                    this.RowDefinitions.Add(new RowDefinition { Height = child2Size });
-                    this.RowDefinitions.Add(new RowDefinition());
-                    SetRow(this.child1, 1);
-                    SetRow(this.child2, 0);
+                    RowDefinitions.Add(new RowDefinition { Height = child2Size });
+                    RowDefinitions.Add(new RowDefinition());
+                    SetRow(Child1, 1);
+                    SetRow(Child2, 0);
                     break;
                 case ZWindowPosition.Below:
-                    this.RowDefinitions.Add(new RowDefinition());
-                    this.RowDefinitions.Add(new RowDefinition { Height = child2Size });
-                    SetRow(this.child1, 0);
-                    SetRow(this.child2, 1);
+                    RowDefinitions.Add(new RowDefinition());
+                    RowDefinitions.Add(new RowDefinition { Height = child2Size });
+                    SetRow(Child1, 0);
+                    SetRow(Child2, 1);
                     break;
             }
 
             child1.SetParentWindow(this);
             child2.SetParentWindow(this);
 
-            this.Children.Add(child1);
-            this.Children.Add(child2);
+            Children.Add(child1);
+            Children.Add(child2);
         }
 
         public void Replace(ZWindow child, ZWindow newChild)
         {
-            if (this.child1.Equals(child))
+            if (Child1.Equals(child))
             {
-                this.child1 = newChild;
-                this.child1.SetParentWindow(null);
-                this.Children[0] = newChild;
+                Child1 = newChild;
+                Child1.SetParentWindow(null);
+                Children[0] = newChild;
                 newChild.SetParentWindow(this);
             }
-            else if (this.child2.Equals(child))
+            else if (Child2.Equals(child))
             {
-                this.child2 = newChild;
-                this.child2.SetParentWindow(null);
-                this.Children[0] = newChild;
+                Child2 = newChild;
+                Child2.SetParentWindow(null);
+                Children[0] = newChild;
                 newChild.SetParentWindow(this);
             }
         }
 
-        public ZWindow Child1
-        {
-            get { return this.child1; }
-        }
+        public ZWindow Child1 { get; private set; }
 
-        public ZWindow Child2
-        {
-            get { return this.child2; }
-        }
+        public ZWindow Child2 { get; private set; }
     }
 }

@@ -14,9 +14,8 @@
     <ApplicationIcon>Z.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="3.0.0-preview5.19224.8" />
-    <PackageReference Include="System.ComponentModel.Composition" Version="4.6.0-preview5.19224.8" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.6.0-preview5.19224.8" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="4.6.0-preview6.19303.8" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.6.0-preview6.19303.8" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.6.0-preview3.19128.7" />
   </ItemGroup>
   <ItemGroup>

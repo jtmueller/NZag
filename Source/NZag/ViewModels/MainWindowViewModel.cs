@@ -1,22 +1,22 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using NZag.Services;
+using SimpleMVVM;
+using System;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Microsoft.Win32;
-using NZag.Services;
-using SimpleMVVM;
 
 namespace NZag.ViewModels
 {
     [Export]
     public class MainWindowViewModel : ViewModelBase<Window>
     {
-        private readonly GameService gameService;
-        private readonly ScreenViewModel screenViewModel;
-        private readonly ProfilerViewModel profilerViewModel;
-        private bool profilingEnabled;
+        private readonly GameService _gameService;
+        private readonly ScreenViewModel _screenViewModel;
+        private readonly ProfilerViewModel _profilerViewModel;
+        private bool _profilingEnabled;
 
         [ImportingConstructor]
         private MainWindowViewModel(
@@ -25,86 +25,62 @@ namespace NZag.ViewModels
             ProfilerViewModel profilerViewModel)
             : base("Views/MainWindowView")
         {
-            this.gameService = gameService;
-            this.screenViewModel = screenViewModel;
-            this.profilerViewModel = profilerViewModel;
+            _gameService = gameService;
+            _screenViewModel = screenViewModel;
+            _profilerViewModel = profilerViewModel;
 
-            this.gameService.GameOpened += OnGameOpened;
-            this.gameService.ScriptLoaded += OnScriptLoaded;
+            _gameService.GameOpened += OnGameOpened;
+            _gameService.ScriptLoaded += OnScriptLoaded;
         }
 
-        public string Title
-        {
-            get
-            {
-                return this.gameService.IsGameOpen
-                    ? "NZag - " + Path.GetFileName(this.gameService.GameFileName)
+        public string Title => _gameService.IsGameOpen
+                    ? "NZag - " + Path.GetFileName(_gameService.GameFileName)
                     : "NZag";
-            }
-        }
 
-        public string GameName
-        {
-            get
-            {
-                return this.gameService.IsGameOpen
-                    ? Path.GetFileName(this.gameService.GameFileName)
+        public string GameName => _gameService.IsGameOpen
+                    ? Path.GetFileName(_gameService.GameFileName)
                     : "None";
-            }
-        }
 
-        public string ScriptName
-        {
-            get
-            {
-                return this.gameService.IsScriptOpen
-                    ? Path.GetFileName(this.gameService.ScriptFileName)
+        public string ScriptName => _gameService.IsScriptOpen
+                    ? Path.GetFileName(_gameService.ScriptFileName)
                     : "None";
-            }
-        }
 
         protected override void OnViewCreated(Window view)
         {
             var screenContent = view.FindName<Grid>("ScreenContent");
-            screenContent.Children.Add(screenViewModel.CreateView());
+            screenContent.Children.Add(_screenViewModel.CreateView());
 
             var profilerContent = view.FindName<Grid>("ProfilerContent");
-            profilerContent.Children.Add(profilerViewModel.CreateView());
+            profilerContent.Children.Add(_profilerViewModel.CreateView());
 
-            this.OpenGameCommand = RegisterCommand("Open", "Open", OpenGameExecuted, CanOpenGameExecute, new KeyGesture(Key.O, ModifierKeys.Control));
-            this.LoadScriptCommand = RegisterCommand("Load Script...", "LoadScript", LoadScriptExecuted, CanLoadScriptExecute);
-            this.ProfileCommand = RegisterCommand<bool>("Profile", "Profile", ProfileExecuted, CanProfileExecute);
-            this.PlayGameCommand = RegisterCommand("Play", "Play", PlayGameExecuted, CanPlayGameExecute, new KeyGesture(Key.F5));
-            this.ResetGameCommand = RegisterCommand("Reset", "Reset", ResetGameExecuted, CanResetGameExecute);
+            OpenGameCommand = RegisterCommand("Open", "Open", OpenGameExecuted, CanOpenGameExecute, new KeyGesture(Key.O, ModifierKeys.Control));
+            LoadScriptCommand = RegisterCommand("Load Script...", "LoadScript", LoadScriptExecuted, CanLoadScriptExecute);
+            ProfileCommand = RegisterCommand<bool>("Profile", "Profile", ProfileExecuted, CanProfileExecute);
+            PlayGameCommand = RegisterCommand("Play", "Play", PlayGameExecuted, CanPlayGameExecute, new KeyGesture(Key.F5));
+            ResetGameCommand = RegisterCommand("Reset", "Reset", ResetGameExecuted, CanResetGameExecute);
         }
 
         private void OnGameOpened(object sender, EventArgs e)
         {
-            this.PropertyChanged("Title");
-            this.PropertyChanged("GameName");
+            PropertyChanged("Title");
+            PropertyChanged("GameName");
         }
 
-        private void OnScriptLoaded(object sender, EventArgs e)
-        {
-            this.PropertyChanged("ScriptName");
-        }
+        private void OnScriptLoaded(object sender, EventArgs e) => PropertyChanged("ScriptName");
 
         private void StartGame()
         {
-            if (this.profilingEnabled)
+            if (_profilingEnabled)
             {
-                this.gameService.StartGame(this.screenViewModel, this.profilerViewModel);
+                _gameService.StartGame(_screenViewModel, _profilerViewModel);
             }
             else
             {
-                this.gameService.StartGame(this.screenViewModel);
+                _gameService.StartGame(_screenViewModel);
             }
         }
 
-        private bool CanOpenGameExecute()
-        {
-            return true;
-        }
+        private bool CanOpenGameExecute() => true;
 
         private void OpenGameExecuted()
         {
@@ -116,19 +92,16 @@ namespace NZag.ViewModels
 
             if (dialog.ShowDialog() == true)
             {
-                if (this.gameService.IsGameOpen)
+                if (_gameService.IsGameOpen)
                 {
-                    this.gameService.CloseGame();
+                    _gameService.CloseGame();
                 }
 
-                this.gameService.OpenGame(dialog.FileName);
+                _gameService.OpenGame(dialog.FileName);
             }
         }
 
-        private bool CanLoadScriptExecute()
-        {
-            return true;
-        }
+        private bool CanLoadScriptExecute() => true;
 
         private void LoadScriptExecuted()
         {
@@ -140,47 +113,32 @@ namespace NZag.ViewModels
 
             if (dialog.ShowDialog() == true)
             {
-                this.gameService.LoadScript(dialog.FileName);
+                _gameService.LoadScript(dialog.FileName);
             }
         }
 
-        private bool CanProfileExecute(bool enabled)
-        {
-            return true;
-        }
+        private bool CanProfileExecute(bool enabled) => true;
 
-        private void ProfileExecuted(bool enabled)
-        {
-            this.profilingEnabled = enabled;
-        }
+        private void ProfileExecuted(bool enabled) => _profilingEnabled = enabled;
 
-        private bool CanPlayGameExecute()
-        {
-            return this.gameService.IsGameOpen;
-        }
+        private bool CanPlayGameExecute() => _gameService.IsGameOpen;
 
-        private void PlayGameExecuted()
-        {
-            StartGame();
-        }
+        private void PlayGameExecuted() => StartGame();
 
-        private bool CanResetGameExecute()
-        {
-            return this.gameService.IsGameOpen;
-        }
+        private bool CanResetGameExecute() => _gameService.IsGameOpen;
 
         private void ResetGameExecuted()
         {
-            var gameFileName = this.gameService.GameFileName;
-            var scriptFileName = this.gameService.ScriptFileName;
+            string gameFileName = _gameService.GameFileName;
+            string scriptFileName = _gameService.ScriptFileName;
 
-            this.gameService.CloseGame();
+            _gameService.CloseGame();
 
-            this.gameService.OpenGame(gameFileName);
+            _gameService.OpenGame(gameFileName);
 
-            if (!string.IsNullOrWhiteSpace(scriptFileName))
+            if (!String.IsNullOrWhiteSpace(scriptFileName))
             {
-                this.gameService.LoadScript(scriptFileName);
+                _gameService.LoadScript(scriptFileName);
             }
 
             StartGame();

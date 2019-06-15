@@ -1,27 +1,21 @@
-﻿using System;
+﻿using NZag.Services;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using NZag.Services;
 
 namespace NZag.Windows
 {
     internal class ZWindowManager
     {
-        private readonly FontAndColorService fontAndColorService;
-
-        private ZWindow rootWindow;
-        private ZWindow activeWindow;
+        private readonly FontAndColorService _fontAndColorService;
 
         public ZWindowManager(FontAndColorService fontAndColorService)
         {
-            this.fontAndColorService = fontAndColorService;
+            _fontAndColorService = fontAndColorService;
         }
 
-        public void ActivateWindow(ZWindow window)
-        {
-            this.activeWindow = window;
-        }
+        public void ActivateWindow(ZWindow window) => ActiveWindow = window;
 
         public ZWindow OpenWindow(
             ZWindowKind kind,
@@ -35,55 +29,48 @@ namespace NZag.Windows
                 throw new InvalidOperationException("ZPairWindows can't be creatted directly");
             }
 
-            if (rootWindow == null && splitWindow != null)
+            if (RootWindow == null && splitWindow != null)
             {
                 throw new InvalidOperationException("Cannot open a split window if the root window has not yet been created.");
             }
 
-            if (rootWindow != null && splitWindow == null)
+            if (RootWindow != null && splitWindow == null)
             {
                 throw new InvalidOperationException("Cannot open a new root window if the root window has already bee created.");
             }
 
             var newWindow = CreateNewWindow(kind);
 
-            if (rootWindow == null)
+            if (RootWindow == null)
             {
-                rootWindow = newWindow;
+                RootWindow = newWindow;
             }
             else
             {
-                GridLength splitSize;
-                switch (sizeKind)
+                var splitSize = sizeKind switch
                 {
-                    case ZWindowSizeKind.Fixed:
-                        var pixels = IsVertical(position)
+                    ZWindowSizeKind.Fixed => 
+                        new GridLength(IsVertical(position)
                             ? size * newWindow.RowHeight
-                            : size * newWindow.ColumnWidth;
-                        splitSize = new GridLength(pixels, GridUnitType.Pixel);
-                        break;
-                    case ZWindowSizeKind.Proportional:
-                        splitSize = new GridLength(size / 100.0, GridUnitType.Star);
-                        break;
-                    default:
-                        throw new InvalidOperationException("Invalid size kind: " + sizeKind.ToString());
-                }
+                            : size * newWindow.ColumnWidth, GridUnitType.Pixel),
+                    ZWindowSizeKind.Proportional => new GridLength(size / 100.0, GridUnitType.Star),
+                    _ => throw new InvalidOperationException("Invalid size kind: " + sizeKind.ToString())
+                };
 
                 Debug.Assert(splitWindow != null, "splitWindow != null");
 
                 var parentGrid = (Grid)splitWindow.Parent;
                 parentGrid.Children.Remove(splitWindow);
 
-                var oldParentWindow = splitWindow.ParentWindow as ZPairWindow;
-                var newParentWindow = new ZPairWindow(this, this.fontAndColorService, splitWindow, newWindow, position, splitSize);
+                var newParentWindow = new ZPairWindow(this, _fontAndColorService, splitWindow, newWindow, position, splitSize);
 
-                if (oldParentWindow != null)
+                if (splitWindow.ParentWindow is ZPairWindow oldParentWindow)
                 {
                     oldParentWindow.Replace(splitWindow, newParentWindow);
                 }
                 else
                 {
-                    rootWindow = newParentWindow;
+                    RootWindow = newParentWindow;
                 }
 
                 parentGrid.Children.Add(newParentWindow);
@@ -100,7 +87,7 @@ namespace NZag.Windows
             var parent = window.ParentWindow;
             if (parent == null) // root window
             {
-                this.rootWindow = null;
+                RootWindow = null;
             }
             else
             {
@@ -116,7 +103,7 @@ namespace NZag.Windows
                 var grandParent = parent.ParentWindow;
                 if (grandParent == null) // root window
                 {
-                    this.rootWindow = sibling;
+                    RootWindow = sibling;
                     sibling.SetParentWindow(null);
                 }
                 else
@@ -148,24 +135,18 @@ namespace NZag.Windows
             switch (kind)
             {
                 case ZWindowKind.Blank:
-                    return new ZBlankWindow(this, this.fontAndColorService);
+                    return new ZBlankWindow(this, _fontAndColorService);
                 case ZWindowKind.TextBuffer:
-                    return new ZTextBufferWindow(this, this.fontAndColorService);
+                    return new ZTextBufferWindow(this, _fontAndColorService);
                 case ZWindowKind.TextGrid:
-                    return new ZTextGridWindow(this, this.fontAndColorService);
+                    return new ZTextGridWindow(this, _fontAndColorService);
                 default:
                     throw new InvalidOperationException("Invalid window kind: " + kind.ToString());
             }
         }
 
-        public ZWindow RootWindow
-        {
-            get { return this.rootWindow; }
-        }
+        public ZWindow RootWindow { get; private set; }
 
-        public ZWindow ActiveWindow
-        {
-            get { return this.activeWindow; }
-        }
+        public ZWindow ActiveWindow { get; private set; }
     }
 }

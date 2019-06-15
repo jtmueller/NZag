@@ -1,91 +1,88 @@
-﻿using System;
+﻿using NZag.Core;
+using NZag.Services;
+using NZag.Windows;
+using SimpleMVVM;
+using SimpleMVVM.Threading;
+using System;
 using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using NZag.Core;
-using NZag.Services;
-using NZag.Windows;
-using SimpleMVVM;
-using SimpleMVVM.Threading;
 
 namespace NZag.ViewModels
 {
     [Export]
     public class ScreenViewModel : ViewModelBase<UserControl>, IScreen
     {
-        private readonly ForegroundThreadAffinitizedObject foregroundThreadAffinitedObject;
+        private readonly ForegroundThreadAffinitizedObject _foregroundThreadAffinitedObject;
 
-        private readonly GameService gameService;
-        private readonly FontAndColorService fontAndColorService;
-        private readonly ZWindowManager windowManager;
+        private readonly GameService _gameService;
+        private readonly FontAndColorService _fontAndColorService;
+        private readonly ZWindowManager _windowManager;
 
-        private Grid windowContainer;
-        private ZWindow mainWindow;
-        private ZWindow upperWindow;
+        private Grid _windowContainer;
+        private ZWindow _mainWindow;
+        private ZWindow _upperWindow;
 
-        private int currentStatusHeight;
-        private int machineStatusHeight;
+        private int _currentStatusHeight;
+        private int _machineStatusHeight;
 
         [ImportingConstructor]
         private ScreenViewModel(GameService gameService, FontAndColorService fontAndColorService)
             : base("Views/ScreenView")
         {
-            this.foregroundThreadAffinitedObject = new ForegroundThreadAffinitizedObject();
+            _foregroundThreadAffinitedObject = new ForegroundThreadAffinitizedObject();
 
-            this.gameService = gameService;
-            this.fontAndColorService = fontAndColorService;
-            this.windowManager = new ZWindowManager(fontAndColorService);
+            _gameService = gameService;
+            _fontAndColorService = fontAndColorService;
+            _windowManager = new ZWindowManager(fontAndColorService);
 
-            this.gameService.GameOpened += OnGameOpened;
-            this.gameService.GameClosing += OnGameClosing;
+            _gameService.GameOpened += OnGameOpened;
+            _gameService.GameClosing += OnGameClosing;
         }
 
-        protected override void OnViewCreated(UserControl view)
-        {
-            this.windowContainer = view.FindName<Grid>("WindowContainer");
-        }
+        protected override void OnViewCreated(UserControl view) => _windowContainer = view.FindName<Grid>("WindowContainer");
 
         private void OnGameOpened(object sender, EventArgs e)
         {
-            this.mainWindow = this.windowManager.OpenWindow(ZWindowKind.TextBuffer);
-            this.windowContainer.Children.Add(this.mainWindow);
-            this.upperWindow = this.windowManager.OpenWindow(ZWindowKind.TextGrid, this.mainWindow, ZWindowPosition.Above);
+            _mainWindow = _windowManager.OpenWindow(ZWindowKind.TextBuffer);
+            _windowContainer.Children.Add(_mainWindow);
+            _upperWindow = _windowManager.OpenWindow(ZWindowKind.TextGrid, _mainWindow, ZWindowPosition.Above);
 
-            this.windowManager.ActivateWindow(this.mainWindow);
+            _windowManager.ActivateWindow(_mainWindow);
         }
 
         private void OnGameClosing(object sender, EventArgs e)
         {
-            this.mainWindow = null;
-            this.upperWindow = null;
-            this.windowManager.CloseWindow(this.windowManager.RootWindow);
+            _mainWindow = null;
+            _upperWindow = null;
+            _windowManager.CloseWindow(_windowManager.RootWindow);
         }
 
         private void ResetStatusHeight()
         {
-            this.foregroundThreadAffinitedObject.AssertIsForeground();
+            _foregroundThreadAffinitedObject.AssertIsForeground();
 
-            if (this.upperWindow != null)
+            if (_upperWindow != null)
             {
-                int height = this.upperWindow.GetHeight();
-                if (this.machineStatusHeight != height)
+                int height = _upperWindow.GetHeight();
+                if (_machineStatusHeight != height)
                 {
-                    this.upperWindow.SetHeight(machineStatusHeight);
+                    _upperWindow.SetHeight(_machineStatusHeight);
                 }
             }
         }
 
         public Task<char> ReadCharAsync()
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(async () =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(async () =>
             {
-                var ch = await this.windowManager.ActiveWindow.ReadCharAsync();
+                char ch = await _windowManager.ActiveWindow.ReadCharAsync();
 
                 ResetStatusHeight();
-                this.currentStatusHeight = 0;
+                _currentStatusHeight = 0;
 
                 return ch;
             }).Unwrap();
@@ -93,23 +90,23 @@ namespace NZag.ViewModels
 
         public Task<string> ReadTextAsync(int maxChars)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(async () =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(async () =>
             {
                 string command;
 
-                if (this.gameService.HasNextScriptCommand)
+                if (_gameService.HasNextScriptCommand)
                 {
-                    command = this.gameService.GetNextScriptCommand();
-                    var forceFixedWidthFont = this.gameService.Machine.ForceFixedWidthFont();
-                    this.windowManager.ActiveWindow.PutText(command + "\r\n", forceFixedWidthFont);
+                    command = _gameService.GetNextScriptCommand();
+                    bool forceFixedWidthFont = _gameService.Machine.ForceFixedWidthFont();
+                    _windowManager.ActiveWindow.PutText(command + "\r\n", forceFixedWidthFont);
                 }
                 else
                 {
-                    command = await this.windowManager.ActiveWindow.ReadTextAsync(maxChars);
+                    command = await _windowManager.ActiveWindow.ReadTextAsync(maxChars);
                 }
 
                 ResetStatusHeight();
-                this.currentStatusHeight = 0;
+                _currentStatusHeight = 0;
 
                 return command;
             }).Unwrap();
@@ -117,56 +114,56 @@ namespace NZag.ViewModels
 
         public Task WriteCharAsync(char value)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
-                var forceFixedWidthFont = this.gameService.Machine.ForceFixedWidthFont();
-                this.windowManager.ActiveWindow.PutChar(value, forceFixedWidthFont);
+                bool forceFixedWidthFont = _gameService.Machine.ForceFixedWidthFont();
+                _windowManager.ActiveWindow.PutChar(value, forceFixedWidthFont);
             });
         }
 
         public Task WriteTextAsync(string value)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
-                var forceFixedWidthFont = this.gameService.Machine.ForceFixedWidthFont();
-                this.windowManager.ActiveWindow.PutText(value, forceFixedWidthFont);
+                bool forceFixedWidthFont = _gameService.Machine.ForceFixedWidthFont();
+                _windowManager.ActiveWindow.PutText(value, forceFixedWidthFont);
             });
         }
 
         public Task ClearAsync(int window)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
                 if (window == 0)
                 {
-                    this.mainWindow.Clear();
+                    _mainWindow.Clear();
                 }
-                else if (window == 1 && this.upperWindow != null)
+                else if (window == 1 && _upperWindow != null)
                 {
-                    this.upperWindow.Clear();
+                    _upperWindow.Clear();
 
                     ResetStatusHeight();
 
-                    this.currentStatusHeight = 0;
+                    _currentStatusHeight = 0;
                 }
             });
         }
 
         public Task ClearAllAsync(bool unsplit)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(async () =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(async () =>
             {
-                this.mainWindow.Clear();
+                _mainWindow.Clear();
 
-                if (this.upperWindow != null)
+                if (_upperWindow != null)
                 {
                     if (unsplit)
                     {
-                        await this.UnsplitAsync();
+                        await UnsplitAsync();
                     }
                     else
                     {
-                        this.upperWindow.Clear();
+                        _upperWindow.Clear();
                     }
                 }
             }).Unwrap();
@@ -174,170 +171,170 @@ namespace NZag.ViewModels
 
         public Task SplitAsync(int lines)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
-                if (this.upperWindow == null)
+                if (_upperWindow == null)
                 {
                     return;
                 }
 
-                if (lines == 0 || lines > this.currentStatusHeight)
+                if (lines == 0 || lines > _currentStatusHeight)
                 {
-                    int height = this.upperWindow.GetHeight();
+                    int height = _upperWindow.GetHeight();
                     if (lines != height)
                     {
-                        this.upperWindow.SetHeight(lines);
-                        this.currentStatusHeight = lines;
+                        _upperWindow.SetHeight(lines);
+                        _currentStatusHeight = lines;
                     }
                 }
 
-                this.machineStatusHeight = lines;
+                _machineStatusHeight = lines;
 
-                if (this.gameService.Machine.Memory.Version == 0)
+                if (_gameService.Machine.Memory.Version == 0)
                 {
-                    this.upperWindow.Clear();
+                    _upperWindow.Clear();
                 }
             });
         }
 
         public Task UnsplitAsync()
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
-                if (this.upperWindow == null)
+                if (_upperWindow == null)
                 {
                     return;
                 }
 
-                this.upperWindow.SetHeight(0);
-                this.upperWindow.Clear();
+                _upperWindow.SetHeight(0);
+                _upperWindow.Clear();
                 ResetStatusHeight();
-                this.currentStatusHeight = 0;
+                _currentStatusHeight = 0;
             });
         }
 
         public Task SetWindowAsync(int window)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
                 if (window == 0)
                 {
-                    this.mainWindow.Activate();
+                    _mainWindow.Activate();
                 }
                 else if (window == 1)
                 {
-                    this.upperWindow.Activate();
+                    _upperWindow.Activate();
                 }
             });
         }
 
         public Task ShowStatusAsync()
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
-                if (this.gameService.Machine.Memory.Version > 3)
+                if (_gameService.Machine.Memory.Version > 3)
                 {
                     return;
                 }
 
-                if (this.upperWindow == null)
+                if (_upperWindow == null)
                 {
-                    this.upperWindow = this.windowManager.OpenWindow(
+                    _upperWindow = _windowManager.OpenWindow(
                         ZWindowKind.TextGrid,
-                        this.mainWindow,
+                        _mainWindow,
                         ZWindowPosition.Above,
                         ZWindowSizeKind.Fixed,
                         size: 1);
                 }
                 else
                 {
-                    int height = this.upperWindow.GetHeight();
+                    int height = _upperWindow.GetHeight();
                     if (height != 1)
                     {
-                        this.upperWindow.SetHeight(1);
-                        this.machineStatusHeight = 1;
+                        _upperWindow.SetHeight(1);
+                        _machineStatusHeight = 1;
                     }
                 }
 
-                this.upperWindow.Clear();
+                _upperWindow.Clear();
 
-                var charWidth = ScreenWidthInColumns;
-                var locationObject = this.gameService.Machine.ReadGlobalVariable(0);
-                var locationText = " " + this.gameService.Machine.ReadObjectShortName(locationObject);
+                byte charWidth = ScreenWidthInColumns;
+                ushort locationObject = _gameService.Machine.ReadGlobalVariable(0);
+                string locationText = " " + _gameService.Machine.ReadObjectShortName(locationObject);
 
-                this.upperWindow.SetReverse(true);
+                _upperWindow.SetReverse(true);
 
                 if (charWidth < 5)
                 {
-                    this.upperWindow.PutText(new string(' ', charWidth), forceFixedWidthFont: false);
+                    _upperWindow.PutText(new string(' ', charWidth), forceFixedWidthFont: false);
                     return;
                 }
 
                 if (locationText.Length > charWidth)
                 {
                     locationText = locationText.Substring(0, charWidth - 3) + "...";
-                    this.upperWindow.PutText(locationText, forceFixedWidthFont: false);
+                    _upperWindow.PutText(locationText, forceFixedWidthFont: false);
                     return;
                 }
 
-                this.upperWindow.PutText(locationText, forceFixedWidthFont: false);
+                _upperWindow.PutText(locationText, forceFixedWidthFont: false);
 
                 string rightText;
-                if (this.gameService.Machine.IsScoreGame())
+                if (_gameService.Machine.IsScoreGame())
                 {
-                    int score = (short)this.gameService.Machine.ReadGlobalVariable(1);
-                    int moves = this.gameService.Machine.ReadGlobalVariable(2);
-                    rightText = string.Format("Score: {0,-8} Moves: {1,-6} ", score, moves);
+                    int score = (short)_gameService.Machine.ReadGlobalVariable(1);
+                    int moves = _gameService.Machine.ReadGlobalVariable(2);
+                    rightText = String.Format("Score: {0,-8} Moves: {1,-6} ", score, moves);
                 }
                 else
                 {
-                    int hours = this.gameService.Machine.ReadGlobalVariable(1);
-                    int minutes = this.gameService.Machine.ReadGlobalVariable(2);
-                    var pm = (hours / 12) > 0;
+                    int hours = _gameService.Machine.ReadGlobalVariable(1);
+                    int minutes = _gameService.Machine.ReadGlobalVariable(2);
+                    bool pm = (hours / 12) > 0;
                     if (pm)
                     {
-                        hours = hours % 12;
+                        hours %= 12;
                     }
 
-                    rightText = string.Format("{0}:{1:n2} {2}", hours, minutes, (pm ? "pm" : "am"));
+                    rightText = String.Format("{0}:{1:n2} {2}", hours, minutes, (pm ? "pm" : "am"));
                 }
 
                 if (rightText.Length < charWidth - locationText.Length - 1)
                 {
-                    this.upperWindow.PutText(
+                    _upperWindow.PutText(
                         new string(' ', charWidth - locationText.Length - rightText.Length),
                         forceFixedWidthFont: false);
 
-                    this.upperWindow.PutText(rightText, forceFixedWidthFont: false);
+                    _upperWindow.PutText(rightText, forceFixedWidthFont: false);
                 }
             });
         }
 
         public Task<int> GetCursorColumnAsync()
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
-                this.windowManager.ActiveWindow.GetCursorColumn());
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+                _windowManager.ActiveWindow.GetCursorColumn());
         }
 
         public Task<int> GetCursorLineAsync()
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
-                this.windowManager.ActiveWindow.GetCursorLine());
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+                _windowManager.ActiveWindow.GetCursorLine());
         }
 
         public Task SetCursorAsync(int line, int column)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
-                this.windowManager.ActiveWindow.SetCursorAsync(line, column);
+                _windowManager.ActiveWindow.SetCursorAsync(line, column);
             });
         }
 
         public Task SetTextStyleAsync(ZTextStyle style)
         {
-            return this.foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
             {
-                var window = this.windowManager.ActiveWindow;
+                var window = _windowManager.ActiveWindow;
 
                 switch (style)
                 {
@@ -365,14 +362,14 @@ namespace NZag.ViewModels
 
         public Task SetForegroundColorAsync(ZColor color)
         {
-            return foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
-                this.fontAndColorService.SetForegroundColor(color));
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+                _fontAndColorService.SetForegroundColor(color));
         }
 
         public Task SetBackgroundColorAsync(ZColor color)
         {
-            return foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
-                this.fontAndColorService.SetBackgroundColor(color));
+            return _foregroundThreadAffinitedObject.InvokeBelowInputPriority(() =>
+                _fontAndColorService.SetBackgroundColor(color));
         }
 
         private FormattedText GetFixedFontMeasureText()
@@ -382,38 +379,21 @@ namespace NZag.ViewModels
                 culture: CultureInfo.InstalledUICulture,
                 flowDirection: FlowDirection.LeftToRight,
                 typeface: new Typeface(new FontFamily("Consolas"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-                emSize: this.fontAndColorService.FontSize,
-                foreground: Brushes.Black);
+                emSize: _fontAndColorService.FontSize,
+                foreground: Brushes.Black,
+                pixelsPerDip: 1.0);
         }
 
-        public byte FontHeightInUnits
-        {
-            get { return (byte)GetFixedFontMeasureText().Height; }
-        }
+        public byte FontHeightInUnits => (byte)GetFixedFontMeasureText().Height;
 
-        public byte FontWidthInUnits
-        {
-            get { return (byte)GetFixedFontMeasureText().Width; }
-        }
+        public byte FontWidthInUnits => (byte)GetFixedFontMeasureText().Width;
 
-        public byte ScreenHeightInLines
-        {
-            get { return (byte)(this.windowContainer.ActualHeight / GetFixedFontMeasureText().Height); }
-        }
+        public byte ScreenHeightInLines => (byte)(_windowContainer.ActualHeight / GetFixedFontMeasureText().Height);
 
-        public ushort ScreenHeightInUnits
-        {
-            get { return (ushort)this.windowContainer.ActualHeight; }
-        }
+        public ushort ScreenHeightInUnits => (ushort)_windowContainer.ActualHeight;
 
-        public byte ScreenWidthInColumns
-        {
-            get { return (byte)(this.windowContainer.ActualWidth / GetFixedFontMeasureText().Width); }
-        }
+        public byte ScreenWidthInColumns => (byte)(_windowContainer.ActualWidth / GetFixedFontMeasureText().Width);
 
-        public ushort ScreenWidthInUnits
-        {
-            get { return (ushort)this.windowContainer.ActualWidth; }
-        }
+        public ushort ScreenWidthInUnits => (ushort)_windowContainer.ActualWidth;
     }
 }

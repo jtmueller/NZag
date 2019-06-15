@@ -1,12 +1,13 @@
 ﻿namespace NZag.Core
 
+open System
 open NZag.Utilities
 
 module Dictionary =
 
     let readWordSeparators (dictionaryAddress: int) (memory: Memory) =
         let count = memory.ReadByte (dictionaryAddress)
-        memory.ReadBytes (dictionaryAddress + 1) (int count)
+        memory.ReadBytes(dictionaryAddress + 1, int count)
 
     let lookupWord (word: string) (dictionaryAddress: int) (memory: Memory) =
         let alphabetTable = new AlphabetTable(memory)
@@ -15,11 +16,11 @@ module Dictionary =
 
         let word =
             if word.Length > (resolution * 3) then
-                word.Substring(0, resolution * 3)
+                word.AsSpan(0, resolution * 3)
             else
-                word
+                word.AsSpan()
 
-        let encoded = word |> ZText.encodeZText alphabetTable
+        let encoded = ZText.encodeZText alphabetTable word
 
         let reader = memory.CreateMemoryReader(dictionaryAddress)
         let wordSeparatorCount = int (reader.NextByte())
@@ -109,9 +110,9 @@ module Dictionary =
             else dictionaryAddress
 
         // Read in the separators
-        let wordSeparators = memory |> readWordSeparators dictionaryAddress
+        let wordSeparators = readWordSeparators dictionaryAddress memory
 
-        let tokenizeWord = memory |> createTokenizeWord textBuffer parseBuffer dictionaryAddress ignoreUnrecognizedWords
+        let tokenizeWord = createTokenizeWord textBuffer parseBuffer dictionaryAddress ignoreUnrecognizedWords memory
 
         // Set number of parse tokens to zero.
         memory.WriteByte(parseBuffer + 1, 0uy)
@@ -136,10 +137,10 @@ module Dictionary =
                   else memory.ReadByte(endAddress)
 
             // Is this a word separator?
-            let wordSeparatorIndex = wordSeparators |> Array.tryFindIndex ((=) zc)
+            let wordSeparatorIndex = wordSeparators.IndexOf(zc)
 
             // If it's not a word separator, a space or the end of the text buffer (0), carry on.
-            if wordSeparatorIndex.IsNone && zc <> 0x20uy && zc <> 0uy then
+            if wordSeparatorIndex < 0 && zc <> 0x20uy && zc <> 0uy then
                 // Is this the start of a word?
                 if startAddress = 0 then
                     startAddress <- endAddress
@@ -148,7 +149,7 @@ module Dictionary =
                 startAddress <- 0
 
             // Translate separator (which is a word in its own right)
-            if wordSeparatorIndex.IsSome then
+            if wordSeparatorIndex >= 0 then
                 tokenizeWord (endAddress - textBuffer) 1
 
             if zc = 0uy then

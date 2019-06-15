@@ -94,13 +94,13 @@ module Async =
 [<RequireQualifiedAccess>]
 module String =
 
-    let replace (oldValue : string) (newValue : string) (s : string) =
+    let replace (oldValue: string) (newValue: string) (s: string) =
         s.Replace(oldValue, newValue)
 
     let fromCharArray (chars: char[]) =
         new string(chars)
 
-    let toCharArray (s : string) =
+    let toCharArray (s: string) =
         s.ToCharArray()
 
 [<RequireQualifiedAccess>]
@@ -109,35 +109,51 @@ module StringBuilder =
     let create() =
         new StringBuilder()
 
-    let appendChar (ch : char) (builder : StringBuilder) =
+    let inline appendChar (ch: char) (builder: StringBuilder) =
         builder.Append(ch) |> ignore
 
-    let appendFormat format (builder : StringBuilder) =
-        Printf.ksprintf (fun s -> builder.Append(s) |> ignore) format
+    let inline appendFormat format (builder: StringBuilder) =
+        Printf.bprintf builder format
 
-    let appendString (s : string) (builder : StringBuilder) =
+    let inline appendString (s: string) (builder: StringBuilder) =
         builder.Append(s) |> ignore
 
-    let appendLineBreak (builder : StringBuilder) =
+    let inline appendLineBreak (builder: StringBuilder) =
         builder.AppendLine() |> ignore
+
+    let inline appendJoinChar (sep: char) (items: seq<'a>) (builder: StringBuilder) =
+        builder.AppendJoin(sep, items) |> ignore
+
+    let inline appendJoinStr (sep: string) (items: seq<'a>) (builder: StringBuilder) =
+        builder.AppendJoin(sep, items) |> ignore
 
 [<RequireQualifiedAccess>]
 module Enumerable =
 
-    let getEnumerator (e : seq<_>) =
+    let getEnumerator (e: seq<_>) =
         e.GetEnumerator()
 
 [<RequireQualifiedAccess>]
 module Enumerator =
 
     let next (e : IEnumerator<_>) =
-        if e.MoveNext() then Some(e.Current)
-        else None
+        if e.MoveNext() then ValueSome(e.Current)
+        else ValueNone
 
 module Array =
 
     let clear arr =
-        Array.Clear(arr, 0, arr |> Array.length)
+        Array.Clear(arr, 0, arr.Length)
+
+    // Converts an array to a span
+    let asSpan = (Span.op_Implicit : 'a[] -> Span<'a>)
+
+    /// Converts an array into a ReadOnlySpan
+    let asReadonly = (ReadOnlySpan.op_Implicit : 'a[] -> ReadOnlySpan<'a>)
+
+module Span =
+    /// Converts a Span into a ReadOnlySpan
+    let asReadonly = (Span.op_Implicit : Span<'a> -> ReadOnlySpan<'a>)
 
 module Collection =
 
@@ -171,16 +187,16 @@ module Dictionary =
 
     let tryFind key (d: IDictionary<_,_>) =
         match d.TryGetValue(key) with
-        | (true, v) -> Some(v)
-        | (false,_) -> None
+        | (true, v) -> ValueSome(v)
+        | (false,_) -> ValueNone
 
     let add k v (d: IDictionary<_,_>) =
         d.Add(k, v)
 
     let getOrAdd k f (d: IDictionary<_,_>) =
         match d |> tryFind k with
-        | Some(v) -> v
-        | None ->
+        | ValueSome(v) -> v
+        | ValueNone ->
             let v = f()
             d.Add(k, v)
             v
@@ -302,6 +318,13 @@ module Stack =
     let pop (s: Stack<_>) = s.Pop()
     let peek (s: Stack<_>) = s.Peek()
 
+    let tryPop (s: Stack<_>) =
+        let popped, x = s.TryPop()
+        if popped then ValueSome x else ValueNone
+    let tryPeek (s: Stack<_>) =
+        let peeked, x = s.TryPeek()
+        if peeked then ValueSome x else ValueNone
+
 [<AutoOpen>]
 module Functions =
 
@@ -309,10 +332,11 @@ module Functions =
         let map = Dictionary.create()
         fun k ->
             match map |> Dictionary.tryFind k with
-            | Some(v) -> v
-            | None -> let v = f k
-                      map.[k] <- v
-                      v
+            | ValueSome v -> v
+            | ValueNone -> 
+                let v = f k
+                map.[k] <- v
+                v
 
     let fixedpoint f v =
         let mutable current = v
@@ -338,26 +362,16 @@ module Extensions =
     type Stream with
         member x.NextByte() =
             match x.ReadByte() with
-            | -1 -> None
-            |  b -> Some(byte b)
+            | -1 -> ValueNone
+            |  b -> ValueSome(byte b)
 
         member x.NextWord() =
-            match x.NextByte(), x.NextByte() with
-            | Some(b1), Some(b2) -> Some((uint16 b1 <<< 8) ||| uint16 b2)
-            | _ -> None
+            match x.ReadByte(), x.ReadByte() with
+            | -1, _ | _, -1 -> ValueNone
+            | b1, b2 -> ValueSome((uint16 b1 <<< 8) ||| uint16 b2)
 
-        member x.ReadBytes length =
-            let buffer = Array.zeroCreate length
+[<AutoOpen>]
+module Operators =
+    /// Calls implicit casts between types 
+    let inline (!>) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit : ^a -> ^b) x)
 
-            let mutable offset = 0
-            let mutable remaining = length
-
-            while remaining > 0 do
-                let read = x.Read(buffer, offset, remaining)
-                if read <= 0 then
-                    raise <| EndOfStreamException(sprintf "End of stream reached with %d bytes left to read." remaining)
-
-                remaining <- remaining - read
-                offset <- offset + read
-
-            buffer

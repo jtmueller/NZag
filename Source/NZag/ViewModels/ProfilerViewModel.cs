@@ -1,48 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Diagnostics;
-using System.Windows.Controls;
-using NZag.Core;
+﻿using NZag.Core;
 using NZag.Extensions;
 using NZag.Profiling;
 using SimpleMVVM;
 using SimpleMVVM.Collections;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Diagnostics;
+using System.Windows.Controls;
 
 namespace NZag.ViewModels
 {
     [Export]
     public class ProfilerViewModel : ViewModelBase<UserControl>, IProfiler
     {
-        private readonly SortedList<int, RoutineViewModel> routineList;
+        private readonly SortedList<int, RoutineViewModel> _routineList;
 
-        private readonly BulkObservableCollection<RoutineViewModel> routines;
-        private readonly ReadOnlyBulkObservableCollection<RoutineViewModel> readOnlyRoutines;
-
-        private bool refreshingData;
-        private object gate = new object();
+        private readonly BulkObservableCollection<RoutineViewModel> _routines;
+        private bool _refreshingData;
+        private readonly object _gate = new object();
 
         [ImportingConstructor]
         private ProfilerViewModel()
             : base("Views/ProfilerView")
         {
-            this.routineList = new SortedList<int, RoutineViewModel>();
-            this.routines = new BulkObservableCollection<RoutineViewModel>();
-            this.readOnlyRoutines = routines.AsReadOnly();
+            _routineList = new SortedList<int, RoutineViewModel>();
+            _routines = new BulkObservableCollection<RoutineViewModel>();
+            Routines = _routines.AsReadOnly();
         }
 
         public void RoutineCompiled(Routine routine, TimeSpan compileTime, int ilByteSize, bool optimized)
         {
-            var address = routine.Address;
+            int address = routine.Address;
 
-            RoutineViewModel routineData;
-            if (!this.routineList.TryGetValue(address, out routineData))
+            if (!_routineList.TryGetValue(address, out var routineData))
             {
                 Debug.Assert(!optimized);
                 routineData = new RoutineViewModel(address, compileTime, ilByteSize, routine.Locals.Length, routine.Instructions.Length);
-                lock (gate)
+                lock (_gate)
                 {
-                    this.routineList.Add(address, routineData);
+                    _routineList.Add(address, routineData);
                 }
             }
             else
@@ -54,14 +51,14 @@ namespace NZag.ViewModels
 
         public void EnterRoutine(Routine routine)
         {
-            var address = routine.Address;
-            var routineData = this.routineList[address];
+            int address = routine.Address;
+            var routineData = _routineList[address];
             routineData.IncrementInvocationCount();
 
-            if (!refreshingData)
+            if (!_refreshingData)
             {
-                this.View.PostAction(RefreshData);
-                refreshingData = true;
+                View.PostAction(RefreshData);
+                _refreshingData = true;
             }
         }
 
@@ -71,15 +68,15 @@ namespace NZag.ViewModels
 
         private void RefreshData()
         {
-            lock (gate)
+            lock (_gate)
             {
-                var routinesCopy = this.routines;
+                var routinesCopy = _routines;
 
                 routinesCopy.BeginBulkOperation();
                 try
                 {
                     routinesCopy.Clear();
-                    foreach (var pair in this.routineList)
+                    foreach (var pair in _routineList)
                     {
                         routinesCopy.Add(pair.Value);
                     }
@@ -89,13 +86,10 @@ namespace NZag.ViewModels
                     routinesCopy.EndBulkOperation();
                 }
 
-                refreshingData = false;
+                _refreshingData = false;
             }
         }
 
-        public ReadOnlyBulkObservableCollection<RoutineViewModel> Routines
-        {
-            get { return this.readOnlyRoutines; }
-        }
+        public ReadOnlyBulkObservableCollection<RoutineViewModel> Routines { get; }
     }
 }

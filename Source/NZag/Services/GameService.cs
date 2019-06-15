@@ -1,70 +1,42 @@
-﻿using System;
+﻿using NZag.Core;
+using System;
 using System.ComponentModel.Composition;
 using System.IO;
-using NZag.Core;
 
 namespace NZag.Services
 {
     [Export]
     public class GameService
     {
-        private string gameFileName;
-        private Machine machine;
+        private string[] _script;
+        private int _scriptIndex = -1;
 
-        private string scriptFileName;
-        private string[] script;
-        private int scriptIndex = -1;
+        private void OnGameClosing() => GameClosing?.Invoke(this, EventArgs.Empty);
 
-        private void OnGameClosing()
-        {
-            var handler = GameClosing;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
-        }
+        private void OnGameOpened() => GameOpened?.Invoke(this, EventArgs.Empty);
 
-        private void OnGameOpened()
-        {
-            var handler = GameOpened;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
-        }
-
-        private void OnScriptLoaded()
-        {
-            var handler = ScriptLoaded;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
-        }
+        private void OnScriptLoaded() => ScriptLoaded?.Invoke(this, EventArgs.Empty);
 
         public void LoadScript(string fileName)
         {
-            this.script = File.ReadAllLines(fileName);
-            this.scriptIndex = 0;
-            this.scriptFileName = fileName;
+            _script = File.ReadAllLines(fileName);
+            _scriptIndex = 0;
+            ScriptFileName = fileName;
 
             OnScriptLoaded();
         }
 
-        public bool HasNextScriptCommand
-        {
-            get { return this.scriptIndex >= 0 && this.scriptIndex < this.script.Length; }
-        }
+        public bool HasNextScriptCommand => _scriptIndex >= 0 && _scriptIndex < _script.Length;
 
         public string GetNextScriptCommand()
         {
             if (!HasNextScriptCommand)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            var command = this.script[this.scriptIndex];
-            this.scriptIndex++;
+            string command = _script[_scriptIndex];
+            _scriptIndex++;
             return command;
         }
 
@@ -72,9 +44,9 @@ namespace NZag.Services
         {
             OnGameClosing();
 
-            this.gameFileName = null;
-            this.machine = null;
-            this.script = null;
+            GameFileName = null;
+            Machine = null;
+            _script = null;
         }
 
         public void OpenGame(string fileName)
@@ -82,10 +54,10 @@ namespace NZag.Services
             using (var file = File.OpenRead(fileName))
             {
                 var memory = Memory.CreateFrom(file);
-                this.machine = new Machine(memory, debugging: false);
+                Machine = new Machine(memory, debugging: false);
             }
 
-            this.gameFileName = fileName;
+            GameFileName = fileName;
 
             OnGameOpened();
         }
@@ -94,38 +66,23 @@ namespace NZag.Services
         {
             if (profiler != null)
             {
-                this.machine.RegisterProfiler(profiler);
+                Machine.RegisterProfiler(profiler);
             }
 
-            this.machine.RegisterScreen(screen);
-            this.machine.Randomize(42);
-            this.machine.RunAsync();
+            Machine.RegisterScreen(screen);
+            Machine.Randomize(42);
+            Machine.RunAsync();
         }
 
-        public bool IsGameOpen
-        {
-            get { return this.machine != null; }
-        }
+        public bool IsGameOpen => Machine != null;
 
-        public Machine Machine
-        {
-            get { return this.machine; }
-        }
+        public Machine Machine { get; private set; }
 
-        public string GameFileName
-        {
-            get { return this.gameFileName; }
-        }
+        public string GameFileName { get; private set; }
 
-        public bool IsScriptOpen
-        {
-            get { return this.script != null; }
-        }
+        public bool IsScriptOpen => _script != null;
 
-        public string ScriptFileName
-        {
-            get { return this.scriptFileName; }
-        }
+        public string ScriptFileName { get; private set; }
 
         public event EventHandler GameClosing;
         public event EventHandler GameOpened;

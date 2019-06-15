@@ -1,6 +1,7 @@
 ﻿namespace NZag.Core
 
 open System
+open System.Text
 open NZag.Utilities
 
 type OpcodeKind =
@@ -21,7 +22,9 @@ type OpcodeFlags =
     | FirstOpByRef = 0x40
     | Return       = 0x80
 
-type Opcode internal (kind : OpcodeKind, number : byte, version : byte, name : string, flags : OpcodeFlags) =
+[<Struct>]
+type Opcode internal (kind: OpcodeKind, number: byte, version: byte, name: string, flags: OpcodeFlags) =
+    static let formatB = StringBuilder.appendFormat "%s (%A:%02x)"
 
     member x.Kind = kind
     member x.Number = number
@@ -40,7 +43,10 @@ type Opcode internal (kind : OpcodeKind, number : byte, version : byte, name : s
     override x.ToString() =
         sprintf "%s (%A:%02x)" name kind number
 
-type OpcodeTable internal (version : byte) =
+    member x.WriteToBuilder(builder: StringBuilder) =
+        formatB builder name kind number
+
+type OpcodeTable internal (version: byte) =
 
     let opcodes = Array.zeroCreate (5 * 32)
 
@@ -237,10 +243,11 @@ module OpcodeTables =
     let getTable (version : byte) =
         opcodeTables.[int version - 1]
 
+[<Struct>]
 type Variable = 
     | StackVariable
-    | LocalVariable of byte
-    | GlobalVariable of byte
+    | LocalVariable of lv: byte
+    | GlobalVariable of gv: byte
 
     static member FromByte value =
         if value = 0uy then
@@ -252,51 +259,70 @@ type Variable =
 
     member x.ToByte() =
         match x with
-        | StackVariable     -> 0uy
-        | LocalVariable(v)  -> v + 1uy
-        | GlobalVariable(v) -> v + 16uy
+        | StackVariable    -> 0uy
+        | LocalVariable v  -> v + 1uy
+        | GlobalVariable v -> v + 16uy
 
     override x.ToString() =
         match x with
-        | StackVariable     -> "SP"
-        | LocalVariable(v)  -> sprintf "L%02x" v
-        | GlobalVariable(v) -> sprintf "G%02x" v
+        | StackVariable    -> "SP"
+        | LocalVariable v  -> sprintf "L%02x" v
+        | GlobalVariable v -> sprintf "G%02x" v
 
+    member x.WriteToBuilder(builder: StringBuilder) =
+        match x with
+        | StackVariable    -> builder |> StringBuilder.appendString "SP"
+        | LocalVariable v  -> (builder |> StringBuilder.appendFormat "L%02x") v
+        | GlobalVariable v -> (builder |> StringBuilder.appendFormat "G%02x") v
+
+[<Struct>]
 type Operand =
-    | LargeConstantOperand of uint16
-    | SmallConstantOperand of byte
-    | VariableOperand of Variable
+    | LargeConstantOperand of lco: uint16
+    | SmallConstantOperand of sco: byte
+    | VariableOperand of vo: Variable
 
     member x.Value =
         match x with
-        | LargeConstantOperand(v) -> v
-        | SmallConstantOperand(v) -> uint16 v
-        | VariableOperand(v)      -> uint16 (v.ToByte())
+        | LargeConstantOperand v -> v
+        | SmallConstantOperand v -> uint16 v
+        | VariableOperand v      -> uint16 (v.ToByte())
 
     override x.ToString() =
         match x with
-        | LargeConstantOperand(v) -> sprintf "%04x" v
-        | SmallConstantOperand(v) -> sprintf "%02x" v
-        | VariableOperand(v)      -> v.ToString()
+        | LargeConstantOperand v -> sprintf "%04x" v
+        | SmallConstantOperand v -> sprintf "%02x" v
+        | VariableOperand(v)     -> v.ToString()
+
+    member x.WriteToBuilder(builder: StringBuilder) =
+        match x with
+        | LargeConstantOperand v -> (builder |> StringBuilder.appendFormat "%04x") v
+        | SmallConstantOperand v -> (builder |> StringBuilder.appendFormat "%02x") v
+        | VariableOperand v      -> v.WriteToBuilder builder
 
 module OperandPatterns =
 
-    let (|NoOps|_|) = function [] -> Some() | _ -> None
-    let (|OpAndList|_|) = function op::ops -> Some(op, ops) | _ -> None
-    let (|Op1|_|) = function op1::[] -> Some(op1) | _ -> None
-    let (|Op2|_|) = function op1::op2::[] -> Some(op1, op2) | _ -> None
-    let (|Op3|_|) = function op1::op2::op3::[] -> Some(op1, op2, op3) | _ -> None
-    let (|Op4|_|) = function op1::op2::op3::op4::[] -> Some(op1, op2, op3, op4) | _ -> None
+    let (|NoOps|_|) = function [||] -> Some() | _ -> None
+    let (|OpAndList|_|) (x:'a[]) =
+        if x.Length >= 1 then Some(x.[0], Array.tail x) else None
+    let (|Op1|_|) (x:'a[]) =
+        if x.Length = 1 then Some(x.[0]) else None
+    let (|Op2|_|) (x:'a[]) =
+        if x.Length = 2 then Some(x.[0], x.[1]) else None
+    let (|Op3|_|) (x:'a[]) =
+        if x.Length = 3 then Some(x.[0], x.[1], x.[2]) else None
+    let (|Op4|_|) (x:'a[]) =
+        if x.Length = 4 then Some(x.[0], x.[1], x.[2], x.[3]) else None
 
+[<Struct>]
 type Branch =
-    | RTrueBranch of bool
-    | RFalseBranch of bool
-    | OffsetBranch of bool * int16
+    | RTrueBranch of rtb: bool
+    | RFalseBranch of rfb: bool
+    | OffsetBranch of ofb: bool * ofs: int16
 
     member x.Condition =
         match x with
-        | RTrueBranch(c)    -> c
-        | RFalseBranch(c)   -> c
+        | RTrueBranch c     -> c
+        | RFalseBranch c    -> c
         | OffsetBranch(c,_) -> c
 
     override x.ToString() =
@@ -305,8 +331,15 @@ type Branch =
         | RFalseBranch(c)   -> sprintf "[%b] rfalse" c
         | OffsetBranch(c,o) -> sprintf "[%b] %x" c o
 
-type Instruction(address : int, length : int, opcode : Opcode, operands: list<Operand>,
-                 storeVariable : option<Variable>, branch : option<Branch>, text : option<string>) =
+    member x.WriteToBuilder(builder: StringBuilder) =
+        match x with
+        | RTrueBranch(c)    -> (builder |> StringBuilder.appendFormat "[%b] rtrue") c
+        | RFalseBranch(c)   -> (builder |> StringBuilder.appendFormat "[%b] rfalse") c
+        | OffsetBranch(c,o) -> (builder |> StringBuilder.appendFormat "[%b] %x") c o
+
+[<Struct>]
+type Instruction(address: int, length: int, opcode: Opcode, operands: Operand[],
+                 storeVariable: Variable voption, branch: Branch voption, text: string voption) =
 
     member x.Address = address
     member x.Length = length
@@ -322,15 +355,16 @@ type Instruction(address : int, length : int, opcode : Opcode, operands: list<Op
 
         let jumpOffset =
             match operands with
-            | [LargeConstantOperand(v)] -> int16 v
+            | [| LargeConstantOperand(v) |] -> int16 v
             | _ -> failcompile "Expected single large constant operand"
 
         address + (length + int jumpOffset - 2)
 
     member x.BranchAddress =
         match branch with
-        | Some(OffsetBranch(_,o)) -> Some(address + (length + int o - 2))
-        | _ -> None
+        | ValueSome(OffsetBranch(_,o)) -> 
+            ValueSome(address + (length + int o - 2))
+        | _ -> ValueNone
 
     override x.ToString() =
         let builder = StringBuilder.create()
@@ -339,29 +373,30 @@ type Instruction(address : int, length : int, opcode : Opcode, operands: list<Op
 
         builder |> StringBuilder.appendString opcode.Name
 
-        operands
-            |> List.map (fun op -> " " + op.ToString())
-            |> List.iter (fun s -> builder |> StringBuilder.appendString s)
+        builder |> StringBuilder.appendJoinChar ' ' operands
 
         match storeVariable with
-        | Some(v) -> builder |> StringBuilder.appendString " -> "
-                     builder |> StringBuilder.appendString (v.ToString())
-        | None    -> ()
+        | ValueSome v -> 
+            builder |> StringBuilder.appendString " -> "
+            v.WriteToBuilder builder
+        | _  -> ()
 
         match branch with
-        | Some(b) -> builder |> StringBuilder.appendChar ' '
-                     builder |> StringBuilder.appendString (b.ToString())
-        | None    -> ()
+        | ValueSome b -> 
+            builder |> StringBuilder.appendChar ' '
+            b.WriteToBuilder builder
+        | _ -> ()
 
         match text with
-        | Some(t) -> builder |> StringBuilder.appendString " \""
-                     builder |> StringBuilder.appendString (t.Replace("\n", "\\n"))
-                     builder |> StringBuilder.appendChar '"'
-        | None    -> ()
+        | ValueSome t ->
+            builder |> StringBuilder.appendString " \""
+            builder |> StringBuilder.appendString (t.Replace("\n", "\\n"))
+            builder |> StringBuilder.appendChar '"'
+        | _ -> ()
 
         builder.ToString()
 
-type InstructionReader (memory : Memory) =
+type InstructionReader (memory: Memory) =
 
     let textReader = new ZTextReader(memory)
     let opcodeTable = OpcodeTables.getTable (byte memory.Version)
@@ -390,86 +425,90 @@ type InstructionReader (memory : Memory) =
     let lookupTable =
         let arr = Array.zeroCreate 256
 
-        let operandKinds = [SmallConstantOp; SmallConstantOp]
+        let operandKinds = [|SmallConstantOp; SmallConstantOp|]
         for i = 0x00 to 0x1F do
-            arr.[i] <- (OpcodeKind.TwoOp, longForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.TwoOp, longForm i, operandKinds)
 
-        let operandKinds = [SmallConstantOp; VariableOp]
+        let operandKinds = [|SmallConstantOp; VariableOp|]
         for i = 0x20 to 0x3F do
-            arr.[i] <- (OpcodeKind.TwoOp, longForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.TwoOp, longForm i, operandKinds)
 
-        let operandKinds = [VariableOp; SmallConstantOp]
+        let operandKinds = [|VariableOp; SmallConstantOp|]
         for i = 0x40 to 0x5F do
-            arr.[i] <- (OpcodeKind.TwoOp, longForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.TwoOp, longForm i, operandKinds)
 
-        let operandKinds = [VariableOp; VariableOp]
+        let operandKinds = [|VariableOp; VariableOp|]
         for i = 0x60 to 0x7F do
-            arr.[i] <- (OpcodeKind.TwoOp, longForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.TwoOp, longForm i, operandKinds)
 
-        let operandKinds = [LargeConstantOp]
+        let operandKinds = [|LargeConstantOp|]
         for i = 0x80 to 0x8F do
-            arr.[i] <- (OpcodeKind.OneOp, shortForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.OneOp, shortForm i, operandKinds)
 
-        let operandKinds = [SmallConstantOp]
+        let operandKinds = [|SmallConstantOp|]
         for i = 0x90 to 0x9F do
-            arr.[i] <- (OpcodeKind.OneOp, shortForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.OneOp, shortForm i, operandKinds)
 
-        let operandKinds = [VariableOp]
+        let operandKinds = [|VariableOp|]
         for i = 0xA0 to 0xAF do
-            arr.[i] <- (OpcodeKind.OneOp, shortForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.OneOp, shortForm i, operandKinds)
 
-        let operandKinds = []
+        let operandKinds = Array.empty
         for i = 0xB0 to 0xBF do
-            arr.[i] <- (OpcodeKind.ZeroOp, shortForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.ZeroOp, shortForm i, operandKinds)
 
         // Actually, 0xBE should be Ext
-        arr.[0xBE] <- (OpcodeKind.Ext, 0uy, operandKinds)
+        arr.[0xBE] <- struct(OpcodeKind.Ext, 0uy, operandKinds)
 
         // For the rest, the operand kinds will be calculated by checking the
         // next bytes of the instruction
         for i = 0xC0 to 0xDF do
-            arr.[i] <- (OpcodeKind.TwoOp, varForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.TwoOp, varForm i, operandKinds)
 
         for i = 0xE0 to 0xFF do
-            arr.[i] <- (OpcodeKind.VarOp, varForm i, operandKinds)
+            arr.[i] <- struct(OpcodeKind.VarOp, varForm i, operandKinds)
 
         arr
 
-    let readOperandKinds (reader : IMemoryReader) =
-      [ let b = reader.NextByte()
-        let shift = ref 6
-        let stop = ref false
-        while !shift >= 0 && not (!stop) do
-            let kind = (b >>> !shift) &&& 0x03uy
-            if kind <> OmittedOp then
-                yield kind
-                shift := !shift - 2
-            else
-                stop := true ]
+    let readOperandKinds (reader: IMemoryReader) =
+        [| 
+            let b = reader.NextByte()
+            let shift = ref 6
+            let stop = ref false
+            while !shift >= 0 && not (!stop) do
+                let kind = (b >>> !shift) &&& 0x03uy
+                if kind <> OmittedOp then
+                    yield kind
+                    shift := !shift - 2
+                else
+                    stop := true 
+        |]
 
-    let readDoubleOperandKinds (reader : IMemoryReader) =
-      [ let w = reader.NextWord()
-        let shift = ref 14
-        let stop = ref false
-        while !shift >= 0 && not (!stop) do
-            let kind = byte (w >>> !shift) &&& 0x03uy
-            if kind <> OmittedOp then
-                yield kind
-                shift := !shift - 2
-            else
-                stop := true ]
+    let readDoubleOperandKinds (reader: IMemoryReader) =
+        [| 
+            let w = reader.NextWord()
+            let shift = ref 14
+            let stop = ref false
+            while !shift >= 0 && not (!stop) do
+                let kind = byte (w >>> !shift) &&& 0x03uy
+                if kind <> OmittedOp then
+                    yield kind
+                    shift := !shift - 2
+                else
+                    stop := true 
+        |]
 
-    let readOperand kind (reader : IMemoryReader) =
+    let readOperand kind (reader: IMemoryReader) =
         match kind with
         | LargeConstantOp -> LargeConstantOperand(reader.NextWord())
         | SmallConstantOp -> SmallConstantOperand(reader.NextByte())
         | VariableOp      -> VariableOperand(reader.NextByte() |> Variable.FromByte)
         | k               -> failcompile "Unexpected operand kind: %d" k
 
-    let readStoreVariable (reader : IMemoryReader) =
+    let readStoreVariable (reader: IMemoryReader) =
         reader.NextByte() |> Variable.FromByte
 
-    let readBranch (reader : IMemoryReader) =
+    let readBranch (reader: IMemoryReader) =
         let b1 = reader.NextByte()
 
         let condition = (b1 &&& 0x80uy) = 0x80uy
@@ -497,17 +536,17 @@ type InstructionReader (memory : Memory) =
         | 1s  -> RTrueBranch(condition)
         | ofs -> OffsetBranch(condition, ofs)
 
-    let readText (reader : IMemoryReader) =
+    let readText (reader: IMemoryReader) =
         reader |> textReader.ReadString
 
-    member x.ReadInstruction (reader : IMemoryReader) =
+    member x.ReadInstruction (reader: IMemoryReader) =
         if reader.Memory <> memory then
             failcompile "Expected IMemoryReader from same memory"
 
         let address = reader.Address
         let opcodeByte1 = reader.NextByte()
 
-        let (kind,number,operandKinds) = lookupTable.[int opcodeByte1]
+        let struct(kind, number, operandKinds) = lookupTable.[int opcodeByte1]
 
         let opcode =
             if kind <> OpcodeKind.Ext then
@@ -523,41 +562,41 @@ type InstructionReader (memory : Memory) =
             else
                 reader |> readDoubleOperandKinds
 
-        let operands = operandKinds |> List.map (fun k -> reader |> readOperand k)
+        let operands = operandKinds |> Array.map (fun k -> reader |> readOperand k)
 
         let storeVariable =
             if opcode.HasStoreVariable then
-                Some(reader |> readStoreVariable)
+                ValueSome(reader |> readStoreVariable)
             else
-                None
+                ValueNone
 
         let branch =
             if opcode.HasBranch then
-                Some(reader |> readBranch)
+                ValueSome(reader |> readBranch)
             else
-                None
+                ValueNone
 
         let text =
             if opcode.HasText then
-                Some(reader |> readText)
+                ValueSome(reader |> readText)
             else
-                None
+                ValueNone
 
         let length = reader.Address - address
 
-        new Instruction(address, length, opcode, operands, storeVariable, branch, text)
+        Instruction(address, length, opcode, operands, storeVariable, branch, text)
 
     member x.ReadInstruction (address: int) =
         let reader = address |> memory.CreateMemoryReader
         x.ReadInstruction reader
 
-type Routine (address: int, instructions: list<Instruction>, locals: list<uint16>) =
+type Routine(address: int, instructions: Instruction[], locals: uint16[]) =
 
     let jumpTargets =
         let targets = SortedSet.create()
 
-        let mutable current = instructions.Head
-        let mutable rest = instructions.Tail
+        let mutable current = instructions.[0]
+        let mutable rest = instructions.AsSpan(1)
 
         targets |> SortedSet.add current.Address
 
@@ -569,17 +608,17 @@ type Routine (address: int, instructions: list<Instruction>, locals: list<uint16
                     targets |> SortedSet.add current.BranchAddress.Value
 
                 // add "else" portion of conditional (i.e. the next instruction).
-                match rest with
-                | (next::_) -> targets |> SortedSet.add next.Address
-                | _ -> ()
+                if rest.Length > 0 then
+                    let next = rest.[0]
+                    targets |> SortedSet.add next.Address
 
             elif current.Opcode.IsJump then
                 // unconditional branch
                 targets |> SortedSet.add current.JumpAddress
 
             if not rest.IsEmpty then
-                current <- rest.Head
-                rest <- rest.Tail
+                current <- rest.[0]
+                rest <- rest.Slice(1)
             else
                 stop <- true
 
@@ -590,16 +629,17 @@ type Routine (address: int, instructions: list<Instruction>, locals: list<uint16
     member x.Locals = locals
     member x.JumpTargets = jumpTargets
 
-type RoutineReader (memory : Memory) =
+type RoutineReader(memory: Memory) =
 
-    let readLocals (reader : IMemoryReader) =
+    let readLocals (reader: IMemoryReader) =
         let localCount = int (reader.NextByte())
         if memory.Version <= 4 then
-            reader.NextWords localCount
+            reader.NextWords(localCount)
         else
-            Array.zeroCreate localCount
+            let output = Array.zeroCreate localCount
+            output
 
-    let readInstructions (reader : IMemoryReader) =
+    let readInstructions (reader: IMemoryReader) =
         let instructionReader = new InstructionReader(memory)
         let result = new ResizeArray<_>()
 
@@ -619,20 +659,20 @@ type RoutineReader (memory : Memory) =
                     stop <- true
             else
                 match i.BranchAddress with
-                | Some(a) ->
+                | ValueSome a ->
                     if a > lastKnownAddress then
                         lastKnownAddress <- a
-                | None -> ()
+                | ValueNone -> ()
 
-        result |> List.ofSeq
+        result.ToArray()
 
     member x.ReadRoutine (reader: IMemoryReader) =
         if reader.Memory <> memory then
             failcompile "Expected IMemoryReader from same memory"
 
         let address = reader.Address
-        let locals = reader |> readLocals |> List.ofArray
-        let instructions = reader |> readInstructions
+        let locals = readLocals reader
+        let instructions = readInstructions reader
 
         new Routine(address, instructions, locals)
 

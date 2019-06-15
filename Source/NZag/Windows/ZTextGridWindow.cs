@@ -1,8 +1,8 @@
-﻿using System.Globalization;
+﻿using NZag.Controls;
+using NZag.Services;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
-using NZag.Controls;
-using NZag.Services;
 
 namespace NZag.Windows
 {
@@ -23,48 +23,46 @@ namespace NZag.Windows
                 culture: CultureInfo.InstalledUICulture,
                 flowDirection: FlowDirection.LeftToRight,
                 typeface: new Typeface(new FontFamily("Consolas"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-                emSize: this.FontSize,
-                foreground: Brushes.Black);
+                emSize: FontSize,
+                foreground: Brushes.Black,
+                pixelsPerDip: 1.0);
 
-            this.fontCharSize = new Size(zero.Width, zero.Height);
+            fontCharSize = new Size(zero.Width, zero.Height);
 
-            this.textGrid = new ZTextGrid(this.FontSize);
-            this.Children.Add(this.textGrid);
+            textGrid = new ZTextGrid(FontSize);
+            Children.Add(textGrid);
         }
 
         public override bool SetBold(bool value)
         {
-            var oldValue = this.bold;
-            this.bold = value;
-            this.textGrid.SetBold(value);
+            bool oldValue = bold;
+            bold = value;
+            textGrid.SetBold(value);
             return oldValue;
         }
 
         public override bool SetItalic(bool value)
         {
-            var oldValue = this.italic;
-            this.italic = value;
-            this.textGrid.SetItalic(value);
+            bool oldValue = italic;
+            italic = value;
+            textGrid.SetItalic(value);
             return oldValue;
         }
 
         public override bool SetReverse(bool value)
         {
-            var oldValue = this.reverse;
-            this.reverse = value;
-            this.textGrid.SetReverse(value);
+            bool oldValue = reverse;
+            reverse = value;
+            textGrid.SetReverse(value);
             return oldValue;
         }
 
-        public override void Clear()
-        {
-            this.textGrid.Clear();
-        }
+        public override void Clear() => textGrid.Clear();
 
         public override void PutChar(char ch, bool forceFixedWidthFont)
         {
             Brush foregroundBrush, backgroundBrush;
-            if (this.reverse)
+            if (reverse)
             {
                 foregroundBrush = BackgroundBrush;
                 backgroundBrush = ForegroundBrush;
@@ -75,13 +73,13 @@ namespace NZag.Windows
                 backgroundBrush = BackgroundBrush;
             }
 
-            this.textGrid.PutChar(ch, foregroundBrush, backgroundBrush);
+            textGrid.PutChar(ch, foregroundBrush, backgroundBrush);
         }
 
         public override void PutText(string text, bool forceFixedWidthFont)
         {
             Brush foregroundBrush, backgroundBrush;
-            if (this.reverse)
+            if (reverse)
             {
                 foregroundBrush = BackgroundBrush;
                 backgroundBrush = ForegroundBrush;
@@ -92,48 +90,33 @@ namespace NZag.Windows
                 backgroundBrush = BackgroundBrush;
             }
 
-            foreach (var ch in text)
+            foreach (char ch in text)
             {
-                this.textGrid.PutChar(ch, foregroundBrush, backgroundBrush);
+                textGrid.PutChar(ch, foregroundBrush, backgroundBrush);
             }
         }
 
-        public override int GetCursorColumn()
-        {
-            return this.textGrid.CursorColumn;
-        }
+        public override int GetCursorColumn() => textGrid.CursorColumn;
 
-        public override int GetCursorLine()
-        {
-            return this.textGrid.CursorLine;
-        }
+        public override int GetCursorLine() => textGrid.CursorLine;
 
-        public override void SetCursorAsync(int line, int column)
-        {
-            this.textGrid.SetCursor(line, column);
-        }
+        public override void SetCursorAsync(int line, int column) => textGrid.SetCursor(line, column);
 
         public override int GetHeight()
         {
-            var rowIndex = GetRow(this);
-            return (int)(this.ParentWindow.RowDefinitions[rowIndex].Height.Value / this.RowHeight);
+            int rowIndex = GetRow(this);
+            return (int)(ParentWindow.RowDefinitions[rowIndex].Height.Value / RowHeight);
         }
 
         public override void SetHeight(int lines)
         {
-            var rowIndex = GetRow(this);
-            this.ParentWindow.RowDefinitions[rowIndex].Height = new GridLength(lines * this.RowHeight, GridUnitType.Pixel);
-            this.textGrid.SetHeight(lines);
+            int rowIndex = GetRow(this);
+            ParentWindow.RowDefinitions[rowIndex].Height = new GridLength(lines * RowHeight, GridUnitType.Pixel);
+            textGrid.SetHeight(lines);
         }
 
-        public override int RowHeight
-        {
-            get { return (int)this.fontCharSize.Height; }
-        }
+        public override int RowHeight => (int)fontCharSize.Height;
 
-        public override int ColumnWidth
-        {
-            get { return (int)this.fontCharSize.Width; }
-        }
+        public override int ColumnWidth => (int)fontCharSize.Width;
     }
 }

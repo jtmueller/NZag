@@ -9,8 +9,8 @@ namespace NZag.Controls
 
         public VisualPair(Visual background, Visual character)
         {
-            this.Background = background;
-            this.Character = character;
+            Background = background;
+            Character = character;
         }
     }
 }

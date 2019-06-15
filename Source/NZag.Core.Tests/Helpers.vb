@@ -124,22 +124,22 @@ Module Helpers
     Function RTrueBranch(condition As Boolean) As Action(Of Instruction)
         Return Sub(i)
                    Assert.True(i.Branch.Value.IsRTrueBranch)
-                   Assert.Equal(condition, CType(i.Branch.Value, Branch.RTrueBranch).Item)
+                   Assert.Equal(condition, i.Branch.Value.rtb)
                End Sub
     End Function
 
     Function RFalseBranch(condition As Boolean) As Action(Of Instruction)
         Return Sub(i)
                    Assert.True(i.Branch.Value.IsRFalseBranch)
-                   Assert.Equal(condition, CType(i.Branch.Value, Branch.RFalseBranch).Item)
+                   Assert.Equal(condition, i.Branch.Value.rtb)
                End Sub
     End Function
 
     Function OffsetBranch(condition As Boolean, offset As Short) As Action(Of Instruction)
         Return Sub(i)
                    Assert.True(i.Branch.Value.IsOffsetBranch)
-                   Assert.Equal(condition, CType(i.Branch.Value, Branch.OffsetBranch).Item1)
-                   Assert.Equal(offset, CType(i.Branch.Value, Branch.OffsetBranch).Item2)
+                   Assert.Equal(condition, i.Branch.Value.ofb)
+                   Assert.Equal(offset, i.Branch.Value.ofs)
                End Sub
     End Function
 
