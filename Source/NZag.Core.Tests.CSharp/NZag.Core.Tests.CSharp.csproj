@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
@@ -17,7 +17,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NZag.CSharp\NZag.CSharp.csproj" />
-    <ProjectReference Include="..\Source\NZag.Core\NZag.Core.fsproj" />
+    <ProjectReference Include="..\NZag.Core\NZag.Core.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\ZCode\Zork1\zork1.z3">
+      <Link>Resources\zork1.z3</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\ZCode\Czech\czech.z5">
+      <Link>Resources\czech.z5</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\ZCode\Advent\Advent.z5">
+      <Link>Resources\Advent.z5</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\ZCode\Adams\COUNT.Z5">
+      <Link>Resources\COUNT.Z5</Link>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

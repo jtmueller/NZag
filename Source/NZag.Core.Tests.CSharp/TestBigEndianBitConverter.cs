@@ -1,5 +1,5 @@
 ﻿
-using MiscUtil.Conversion;
+using NZag.CSharp.MiscUtil;
 using System;
 using Xunit;
 

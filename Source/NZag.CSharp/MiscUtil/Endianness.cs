@@ -1,5 +1,5 @@
 
-namespace MiscUtil.Conversion
+namespace NZag.CSharp.MiscUtil
 {
 	/// <summary>
 	/// Endianness of a converter

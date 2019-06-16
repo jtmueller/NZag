@@ -5,7 +5,7 @@ open System.IO
 open System.Buffers
 open System.Runtime.InteropServices
 open NZag.Utilities
-open MiscUtil.Conversion
+open NZag.CSharp.MiscUtil
 
 type IMemoryReader =
     /// Read the next byte without incrementing the address
@@ -45,7 +45,6 @@ and Memory private (stream : Stream) =
     // We split memory into 64k chunks to avoid creating very large arrays.
     [<Literal>]
     let ChunkSize = 0x10000
-
 
     let version =
         do stream.Seek(0L, SeekOrigin.Begin) |> ignore

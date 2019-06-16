@@ -8,7 +8,6 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Tailcalls>true</Tailcalls>
   </PropertyGroup>
-  <!--<Import Project="$(FSharpTargetsPath)" />-->
   <ItemGroup>
     <Compile Include="Utilities.fs" />
     <Compile Include="Reflection.fs" />
@@ -27,6 +26,6 @@
     <Compile Include="Machine.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\NZag.CSharp\NZag.CSharp.csproj" />
+    <ProjectReference Include="..\NZag.CSharp\NZag.CSharp.csproj" />
   </ItemGroup>
 </Project>

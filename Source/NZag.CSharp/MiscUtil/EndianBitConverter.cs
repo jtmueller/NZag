@@ -2,7 +2,7 @@ using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 
-namespace MiscUtil.Conversion
+namespace NZag.CSharp.MiscUtil
 {
     /// <summary>
     /// Equivalent of System.BitConverter, but with either endianness.

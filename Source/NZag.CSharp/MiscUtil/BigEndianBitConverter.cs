@@ -1,7 +1,7 @@
 
 using System;
 
-namespace MiscUtil.Conversion
+namespace NZag.CSharp.MiscUtil
 {
     /// <summary>
     /// Implementation of EndianBitConverter which converts to/from big-endian

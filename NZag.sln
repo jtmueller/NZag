@@ -9,9 +9,9 @@ Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "NZag.Core.Tests", "Source\N
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NZag", "Source\NZag\NZag.csproj", "{00C3B5E8-3654-4192-BA77-3ADB49696685}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NZag.CSharp", "NZag.CSharp\NZag.CSharp.csproj", "{71BD6C6E-7ED6-4652-A07C-57EF8C4661ED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NZag.CSharp", "Source\NZag.CSharp\NZag.CSharp.csproj", "{71BD6C6E-7ED6-4652-A07C-57EF8C4661ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NZag.Core.Tests.CSharp", "NZag.Core.Tests.CSharp\NZag.Core.Tests.CSharp.csproj", "{DF1414D8-F16E-47EA-8A02-DF963C12E0FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NZag.Core.Tests.CSharp", "Source\NZag.Core.Tests.CSharp\NZag.Core.Tests.CSharp.csproj", "{DF1414D8-F16E-47EA-8A02-DF963C12E0FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

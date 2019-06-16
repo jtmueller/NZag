@@ -475,6 +475,7 @@ module Optimization =
                     updater.AddStatement(s)
             | s -> updater.AddStatement(s))
 
+    [<CompiledName("Optimize")>]
     let optimize tree =
         let optimized = tree |> fixedpoint (fun tree ->
             tree

@@ -20,13 +20,16 @@ type IBitSet =
 
 module BitSet =
 
+    let private bitMustBeInRange = argOutOfRange "bit" "bit must be in the range 0 to %i."
+    let private setsMustHaveSameLength = argOutOfRange "other" "Bit sets must have the same length. Expected %i but was %i"
+
     let inline private validateBit bit length =
-        if bit < 0 || bit >= length then
-            argOutOfRange "bit" "bit must be in the range 0 to %d." length
+        if uint32 bit >= uint32 length then
+            bitMustBeInRange length
 
     let inline private validateBitSetLength (bitSet: IBitSet) length =
         if length <> bitSet.Length then
-            argOutOfRange "other" "Bit sets must have the same length. Expected %d but was %d" length bitSet.Length
+            setsMustHaveSameLength length bitSet.Length
 
     let inline private mask32 bit = 1ul <<< bit
     let inline private mask64 bit = 1UL <<< bit
