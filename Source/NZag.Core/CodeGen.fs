@@ -59,12 +59,12 @@ and ZCompiledRoutine =
     Invokers : ZFuncInvoker[]
     CompileTime : TimeSpan }
 
-and ZFunc = delegate of memory:Memory
-                      * locals:uint16[]
-                      * stack:uint16[]
-                      * sp:int
-                      * invokers:ZFuncInvoker[]
-                      * argCount:int
+and ZFunc = delegate of memory: Memory
+                      * locals: uint16[]
+                      * stack: uint16[]
+                      * sp: int
+                      * invokers: ZFuncInvoker[]
+                      * argCount: int
                      -> uint16
 
 and ZFuncInvoker(machine: IMachine, routine: Routine) =

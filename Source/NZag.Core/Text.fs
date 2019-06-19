@@ -2,6 +2,7 @@
 
 open System
 open System.Text
+open System.Buffers
 open System.Collections.Generic
 open NZag.Utilities
 
@@ -10,10 +11,10 @@ type ZCharEnumerator = IEnumerator<ZChar>
 
 type AlphabetTable (memory : Memory) =
 
-    let A0    = "      abcdefghijklmnopqrstuvwxyz" |> String.toCharArray
-    let A1    = "      ABCDEFGHIJKLMNOPQRSTUVWXYZ" |> String.toCharArray
-    let A2_v1 = "       0123456789.,!?_#'\"/\\<-:()" |> String.toCharArray
-    let A2    = "       \n0123456789.,!?_#'\"/\\-:()" |> String.toCharArray
+    static let A0    = "      abcdefghijklmnopqrstuvwxyz"    |> String.toCharArray
+    static let A1    = "      ABCDEFGHIJKLMNOPQRSTUVWXYZ"    |> String.toCharArray
+    static let A2_v1 = "       0123456789.,!?_#'\"/\\<-:()"  |> String.toCharArray
+    static let A2    = "       \n0123456789.,!?_#'\"/\\-:()" |> String.toCharArray
 
     let readCustomTable address =
         let byteToChar b =
@@ -107,7 +108,7 @@ module private ZText =
             let index = ref 0
             while !index < length do
                 let zword = reader.NextWord()
-                let last = (zword &&& 0x8000us) = 0x8000us
+                //let last = (zword &&& 0x8000us) = 0x8000us
                 yield byte ((zword >>> 10) &&& 0x1fus)
                 yield byte ((zword >>> 5) &&& 0x1fus)
                 yield byte (zword &&& 0x1fus)
@@ -156,7 +157,8 @@ module private ZText =
 
         let length = resolution * 3
         let address = ref 0
-        let zchars = Array.zeroCreate length
+        let zchars = ArrayPool<byte>.Shared.Rent(length)
+        Array.Clear(zchars, 0, length)
 
         let writeByte b =
             zchars.[!address] <- b
@@ -196,6 +198,8 @@ module private ZText =
             zwords.[i] <- uint16 (z1 <<< 10) ||| uint16 (z2 <<< 5) ||| z3
 
         zwords.[resolution-1] <- zwords.[resolution-1] ||| 0x8000us
+
+        ArrayPool<byte>.Shared.Return(zchars)
 
         zwords
 

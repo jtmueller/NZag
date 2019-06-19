@@ -1,9 +1,9 @@
 
-using NZag.CSharp.MiscUtil;
+using NZag.Utilities;
 using System;
 using Xunit;
 
-namespace NZag.Core.Tests.MiscUtil
+namespace NZag.Core.Tests
 {
     public class TestLittleEndianBitConverter
     {
@@ -89,7 +89,7 @@ namespace NZag.Core.Tests.MiscUtil
             Assert.Equal("7F-2C-4A", EndianBitConverter.ToString(new byte[] { 0x7f, 0x2c, 0x4a }));
         }
 
-        private void CheckBytes(Span<byte> expected, ReadOnlySpan<byte> actual)
+        private void CheckBytes(ReadOnlySpan<byte> expected, ReadOnlySpan<byte> actual)
             => Assert.True(expected.SequenceEqual(actual), "Actual bytes did not match expected bytes.");
     }
 }

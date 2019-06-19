@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace NZag.CSharp.MiscUtil
+namespace NZag.Utilities
 {
     internal static class Throw
     {

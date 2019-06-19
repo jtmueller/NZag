@@ -1,13 +1,18 @@
-﻿Imports NZag.Core.Tests.Mocks
-Imports NZag.Utilities
-Imports Xunit
+﻿using System;
+using System.Threading.Tasks;
+using Xunit;
+using NZag.Core.Tests.Mocks;
+using static NZag.Core.Tests.Helpers;
+using NZag.Utilities;
 
-Public Class GameTests
-
-    <Fact()>
-    Async Function RunCZech() As Task
-        Dim expected =
-        <![CDATA[
+namespace NZag.Core.Tests
+{
+    public class GameTests
+    {
+        [Fact]
+        public async Task RunCZech()
+        {
+            string expected = @"
 CZECH: the Comprehensive Z-machine Emulation CHecker, version 0.8
 Test numbers appear in [brackets].
 
@@ -64,16 +69,15 @@ Abbreviations (I love 'xyzzy' [two times]): I love 'xyzzy'  I love 'xyzzy'
 Performed 425 tests.
 Passed: 406, Failed: 0, Print tests: 19
 Didn't crash: hooray!
-Last test: quit!
-]]>
+Last test: quit!";
 
-        Await Test(CZech, expected)
-    End Function
+            await TestAsync(CZech, expected);
+        }
 
-    <Fact()>
-    Async Function RunZork1() As Task
-        Dim expected =
-        <![CDATA[
+        [Fact]
+        public async Task RunZork1()
+        {
+            string expected = @"
 ZORK I: The Great Underground Empire
 Copyright (c) 1981, 1982, 1983 Infocom, Inc. All rights reserved.
 ZORK is a registered trademark of Infocom, Inc.
@@ -482,144 +486,153 @@ Beside the skeleton is a rusty knife.
 The deceased adventurer's useless lantern is here.
 There is a skeleton key here.
 An old leather bag, bulging with coins, is here.
-A seedy-looking individual with a large bag just wandered through the room. On the way through, he quietly abstracted some valuables from the room and from your possession, mumbling something about "Doing unto others before..."
+A seedy-looking individual with a large bag just wandered through the room. On the way through, he quietly abstracted some valuables from the room and from your possession, mumbling something about ""Doing unto others before...""
 
->GET BAG AND KEY
-large bag: The bag will be taken over his dead body.skeleton key: Taken.
->SW
+> GET BAG AND KEY
+ large bag: The bag will be taken over his dead body.skeleton key: Taken.
+ > SW
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->E
+> E
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->S
+> S
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->SE
+> SE
 Cyclops Room
 This room has an exit on the northwest, and a staircase leading up.
-A cyclops, who looks prepared to eat horses (much less mere adventurers), blocks the staircase. From his state of health, and the bloodstains on the walls, you gather that he is not very friendly, though he likes people.
->GIVE LUNCH AND WATER TO CYCLOPS
-lunch: The cyclops says "Mmm Mmm. I love hot peppers! But oh, could I use a drink. Perhaps I could drink the blood of that thing."  From the gleam in his eye, it could be surmised that you are "that thing".
+A cyclops, who looks prepared to eat horses(much less mere adventurers), blocks the staircase.From his state of health, and the bloodstains on the walls, you gather that he is not very friendly, though he likes people.
+> GIVE LUNCH AND WATER TO CYCLOPS
+ lunch: The cyclops says ""Mmm Mmm. I love hot peppers! But oh, could I use a drink. Perhaps I could drink the blood of that thing.""  From the gleam in his eye, it could be surmised that you are ""that thing"".
 quantity of water: The cyclops takes the bottle, checks that it's open, and drinks the water. A moment later, he lets out a yawn that nearly blows you over, and then falls fast asleep (what did you put in that drink, anyway?).
 
->DROP BOTTLE
-You don't have the glass bottle.
+> DROP BOTTLE
+ You don't have the glass bottle.
 
->U
+ > U
 You hear a scream of anguish as you violate the robber's hideaway. Using passages unknown to you, he rushes to its defense.
 The thief gestures mysteriously, and the treasures in the room suddenly vanish.
 
 Treasure Room
 This is a large room, whose east wall is solid granite. A number of discarded bags, which crumble at your touch, are scattered about on the floor. There is an exit down a staircase.
-There is a suspicious-looking individual, holding a large bag, leaning against one wall. He is armed with a deadly stiletto.
-There is a silver chalice, intricately engraved, here.
+There is a suspicious - looking individual, holding a large bag, leaning against one wall.He is armed with a deadly stiletto.
+ There is a silver chalice, intricately engraved, here.
 The thief stabs nonchalantly with his stiletto and misses.
 
->GIVE EGG TO THIEF
-The thief is taken aback by your unexpected generosity, but accepts the jewel-encrusted egg and stops to admire its beauty.
->KILL THIEF
-(with the nasty knife)
+> GIVE EGG TO THIEF
+ The thief is taken aback by your unexpected generosity, but accepts the jewel - encrusted egg and stops to admire its beauty.
+   > KILL THIEF
+    (with the nasty knife)
 Clang! Crash! The thief parries.
-A long, theatrical slash. You catch it on your nasty knife, but the thief twists his knife, and the nasty knife goes flying.
+A long, theatrical slash.You catch it on your nasty knife, but the thief twists his knife, and the nasty knife goes flying.
 
->GET KNIFE
+
+> GET KNIFE
 Taken.A quick thrust pinks your left arm, and blood starts to trickle down.
 
->KILL THIEF
-(with the nasty knife)
+> KILL THIEF
+ (with the nasty knife)
 The thief's weapon is knocked to the floor, leaving him unarmed.
 The robber, somewhat surprised at this turn of events, nimbly retrieves his stiletto.
 
->KILL THIEF
-(with the nasty knife)
+> KILL THIEF
+ (with the nasty knife)
 Your nasty knife pinks the thief on the wrist, but it's not serious.
 The thief stabs nonchalantly with his stiletto and misses.
 
->KILL THIEF
+
+> KILL THIEF
 (with the nasty knife)
 The thief is battered into unconsciousness.
 
->KILL THIEF
+
+> KILL THIEF
 (with the nasty knife)
 The unarmed thief cannot defend himself: He dies.
 Almost as soon as the thief breathes his last breath, a cloud of sinister black fog envelops him, and when the fog lifts, the carcass has disappeared.
 As the thief dies, the power of his magic decreases, and his treasures reappear:
   A leather bag of coins
-  A jewel-encrusted egg, with a golden clockwork canary
-  A stiletto
-The chalice is now safe to take.
+  A jewel - encrusted egg, with a golden clockwork canary
+    A stiletto
+  The chalice is now safe to take.
 
->GET ALL BUT STILETTO
-leather bag of coins: Taken.jewel-encrusted egg: Taken.chalice: Taken.
->DROP KNIFE
+> GET ALL BUT STILETTO
+ leather bag of coins: Taken.jewel - encrusted egg: Taken.chalice: Taken.
+   > DROP KNIFE
 Dropped.
->D
+> D
 Cyclops Room
 There is a glass bottle here.
 
->NW
+> NW
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->S
+
+> S
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->W
+
+> W
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->U
+
+> U
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->D
+
+> D
 You won't be able to get back up to the tunnel you are going through when it gets to the next room.
 
 Maze
 This is part of a maze of twisty little passages, all alike.
 
->NE
+
+> NE
 Grating Room
 You are in a small room near the maze. There are twisty passages in the immediate vicinity.
-Above you is a grating locked with a skull-and-crossbones lock.
+Above you is a grating locked with a skull-and - crossbones lock.
+ 
 
->UNLOCK GRATE
-(with the skeleton key)
+ > UNLOCK GRATE
+  (with the skeleton key)
 The grate is unlocked.
->DROP KEY
+> DROP KEY
 Dropped.
->OPEN GRATE
+> OPEN GRATE
 The grating opens to reveal trees above you.
 A pile of leaves falls onto your head and to the ground.
 
->U
+> U
 Clearing
-You are in a clearing, with a forest surrounding you on all sides. A path leads south.
+You are in a clearing, with a forest surrounding you on all sides.A path leads south.
 There is an open grating, descending into darkness.
 
->S
+> S
 Forest Path
 
->WIND UP CANARY
-The canary chirps, slightly off-key, an aria from a forgotten opera. From out of the greenery flies a lovely songbird. It perches on a limb just over your head and opens its beak to sing. As it does so a beautiful brass bauble drops from its mouth, bounces off the top of your head, and lands glimmering in the grass. As the canary winds down, the songbird flies away.
+> WIND UP CANARY
+The canary chirps, slightly off-key, an aria from a forgotten opera.From out of the greenery flies a lovely songbird.It perches on a limb just over your head and opens its beak to sing.As it does so a beautiful brass bauble drops from its mouth, bounces off the top of your head, and lands glimmering in the grass. As the canary winds down, the songbird flies away.
 You hear in the distance the chirping of a song bird.
->GET BAUBLE
+> GET BAUBLE
 Taken.
->S
+> S
 North of House
 
->E
+> E
 Behind House
 
->W
+> W
 Kitchen
 
->W
+> W
 Living Room
 There is a brown sack here.
 There is a clove of garlic here.
@@ -629,45 +642,47 @@ Your collection of treasures consists of:    A sceptre
     A painting
     A gold coffin
 
->GET CANARY
+> GET CANARY
 Taken.
->PUT ALL BUT LAMP IN CASE
-golden clockwork canary: Done.beautiful brass bauble: Done.chalice: Done.jewel-encrusted egg: Done.leather bag of coins: Done.
->GET GARLIC
+> PUT ALL BUT LAMP IN CASE
+golden clockwork canary: Done.beautiful brass bauble: Done.chalice: Done.jewel - encrusted egg: Done.leather bag of coins: Done.
+  > GET GARLIC
 Taken.
->D
+> D
 Cellar
 
->N
+> N
 The Troll Room
 There is a sword here.
 There is a bloody axe here.
 
->E
-East-West Passage
+> E
+East - West Passage
 
->N
+ > N
 Chasm
 A chasm runs southwest to northeast and the path follows it. You are on the south side of the chasm, where a crack opens into a passage.
 
->NE
+
+> NE
 Reservoir South
 You are in a long room on the south shore of a large lake, far too deep and wide for crossing.
 There is a path along the stream to the east or west, a steep pathway climbing southwest along the edge of a chasm, and a path leading into a canyon to the southeast.
->E
+> E
 Dam
 You are standing on the top of the Flood Control Dam #3, which was quite a tourist attraction in times far distant. There are paths to the north, south, and west, and a scramble down.
-The sluice gates on the dam are closed. Behind the dam, there can be seen a wide reservoir. Water is pouring over the top of the now abandoned dam.
-There is a control panel here, on which a large metal bolt is mounted. Directly above the bolt is a small green plastic bubble.
->N
+The sluice gates on the dam are closed.Behind the dam, there can be seen a wide reservoir.Water is pouring over the top of the now abandoned dam.
+There is a control panel here, on which a large metal bolt is mounted.Directly above the bolt is a small green plastic bubble.
+> N
 Dam Lobby
-This room appears to have been the waiting room for groups touring the dam. There are open doorways here to the north and east marked "Private", and there is a path leading south over the top of the dam.
-Some guidebooks entitled "Flood Control Dam #3" are on the reception desk.
-There is a matchbook whose cover says "Visit Beautiful FCD#3" here.
+This room appears to have been the waiting room for groups touring the dam.There are open doorways here to the north and east marked ""Private"", and there is a path leading south over the top of the dam.
+Some guidebooks entitled ""Flood Control Dam #3"" are on the reception desk.
+There is a matchbook whose cover says ""Visit Beautiful FCD#3"" here.
 
->GET MATCHBOOK
+
+> GET MATCHBOOK
 Taken.
->E
+> E
 Maintenance Room
 This is what appears to have been the maintenance room for Flood Control Dam #3. Apparently, this room has been ransacked recently, for most of the valuable equipment is gone. On the wall in front of you is a group of buttons colored blue, yellow, brown, and red. There are doorways to the west and south.
 There is a group of tool chests here.
@@ -675,594 +690,632 @@ There is a wrench here.
 There is an object which looks like a tube of toothpaste here.
 There is a screwdriver here.
 
->PUSH YELLOW
-Click.
->GET WRENCH AND SCREWDRIVER
-wrench: Taken.screwdriver: Taken.
->W
-Dam Lobby
-Some guidebooks entitled "Flood Control Dam #3" are on the reception desk.
 
->S
+> PUSH YELLOW
+Click.
+> GET WRENCH AND SCREWDRIVER
+wrench: Taken.screwdriver: Taken.
+> W
+Dam Lobby
+Some guidebooks entitled ""Flood Control Dam #3"" are on the reception desk.
+
+
+> S
 Dam
 You are standing on the top of the Flood Control Dam #3, which was quite a tourist attraction in times far distant. There are paths to the north, south, and west, and a scramble down.
-The sluice gates on the dam are closed. Behind the dam, there can be seen a wide reservoir. Water is pouring over the top of the now abandoned dam.
-There is a control panel here, on which a large metal bolt is mounted. Directly above the bolt is a small green plastic bubble which is glowing serenely.
->DROP GARLIC AND SCREWDRIVER
+The sluice gates on the dam are closed.Behind the dam, there can be seen a wide reservoir.Water is pouring over the top of the now abandoned dam.
+There is a control panel here, on which a large metal bolt is mounted.Directly above the bolt is a small green plastic bubble which is glowing serenely.
+> DROP GARLIC AND SCREWDRIVER
 clove of garlic: Dropped.screwdriver: Dropped.
->TURN BOLT WITH WRENCH
+> TURN BOLT WITH WRENCH
 The sluice gates open and water pours through the dam.
 
->DROP WRENCH
+
+> DROP WRENCH
 Dropped.
->E
+> E
 Dam Base
 You are at the base of Flood Control Dam #3, which looms above you and to the north. The river Frigid is flowing by here. Along the river are the White Cliffs which seem to form giant walls stretching from north to south along the shores of the river as it winds its way downstream.
 There is a folded pile of plastic here which has a small valve attached.
 
->GET PLASTIC
+
+> GET PLASTIC
 Taken.
->N
+> N
 Dam
 There is a wrench here.
 There is a screwdriver here.
 There is a clove of garlic here.
 
->DROP PLASTIC
+
+> DROP PLASTIC
 Dropped.
->S
+> S
 Deep Canyon
-You are on the south edge of a deep canyon. Passages lead off to the east, northwest and southwest. A stairway leads down. You can hear a loud roaring sound, like that of rushing water, from below.
+You are on the south edge of a deep canyon.Passages lead off to the east, northwest and southwest.A stairway leads down.You can hear a loud roaring sound, like that of rushing water, from below.
 
->SW
-North-South Passage
-This is a high north-south passage, which forks to the northeast.
 
->S
+> SW
+North - South Passage
+This is a high north - south passage, which forks to the northeast.
+
+
+> S
 Round Room
 
->E
+> E
 Loud Room
-This is a large room with a ceiling which cannot be detected from the ground. There is a narrow passage from east to west and a stone stairway leading upward. The room is deafeningly loud with an undetermined rushing sound. The sound seems to reverberate from all of the walls, making it difficult even to think.
+This is a large room with a ceiling which cannot be detected from the ground.There is a narrow passage from east to west and a stone stairway leading upward.The room is deafeningly loud with an undetermined rushing sound.The sound seems to reverberate from all of the walls, making it difficult even to think.
 On the ground is a large platinum bar.
 
->ECHO
+
+> ECHO
 The acoustics of the room change subtly.
 
+
 Loud Room
 On the ground is a large platinum bar.
 
->GET BAR
+
+> GET BAR
 Taken.
->W
+> W
 Round Room
 
->SE
+> SE
 Engravings Cave
 There are old engravings on the walls here.
 
->E
+
+> E
 Dome Room
 
->D
+> D
 Torch Room
 Sitting on the pedestal is a flaming torch, made of ivory.
 
->TURN OFF LAMP
+
+> TURN OFF LAMP
 The brass lantern is now off.
 
->GET TORCH
+
+> GET TORCH
 Taken.
->S
+> S
 Temple
 There is a brass bell here.
 
->GET BELL
+
+> GET BELL
 Taken.
->S
+> S
 Altar
 On the two ends of the altar are burning candles.
 On the altar is a large black book, open to page 569.
 
->GET ALL
+
+> GET ALL
 black book: Taken.pair of candles: Taken.
->D
+> D
 Cave
 This is a tiny cave with entrances west and north, and a dark, forbidding staircase leading down.
 A gust of wind blows out your candles!
 
->D
+> D
 Entrance to Hades
 You are outside a large gateway, on which is inscribed
 
-  Abandon every hope all ye who enter here!
+ Abandon every hope all ye who enter here!
+
 
 The gate is open; through it you can see a desolation, with a pile of mangled bodies in one corner. Thousands of voices, lamenting some hideous fate, can be heard.
 The way through the gate is barred by evil spirits, who jeer at your attempts to pass.
->RING BELL
-The bell suddenly becomes red hot and falls to the ground. The wraiths, as if paralyzed, stop their jeering and slowly turn to face you. On their ashen faces, the expression of a long-forgotten terror takes shape.
-In your confusion, the candles drop to the ground (and they are out).
+> RING BELL
+ The bell suddenly becomes red hot and falls to the ground. The wraiths, as if paralyzed, stop their jeering and slowly turn to face you.On their ashen faces, the expression of a long-forgotten terror takes shape.
+In your confusion, the candles drop to the ground(and they are out).
 
->GET CANDLES
+> GET CANDLES
 Taken.
->LIGHT MATCH
+> LIGHT MATCH
 One of the matches starts to burn.
 
->LIGHT CANDLES
-(with the match)
+> LIGHT CANDLES
+ (with the match)
 The candles are lit.
 The flames flicker wildly and appear to dance. The earth beneath your feet trembles, and your legs nearly buckle beneath you. The spirits cower at your unearthly power.
 The match has gone out.
 
->READ BOOK
-Each word of the prayer reverberates through the hall in a deafening confusion. As the last word fades, a voice, loud and commanding, speaks: "Begone, fiends!" A heart-stopping scream fills the cavern, and the spirits, sensing a greater power, flee through the walls.
+> READ BOOK
+ Each word of the prayer reverberates through the hall in a deafening confusion.As the last word fades, a voice, loud and commanding, speaks: ""Begone, fiends!"" A heart-stopping scream fills the cavern, and the spirits, sensing a greater power, flee through the walls.
 
->S
+> S
 Land of the Dead
-You have entered the Land of the Living Dead. Thousands of lost souls can be heard weeping and moaning. In the corner are stacked the remains of dozens of previous adventurers less fortunate than yourself. A passage exits to the north.
-Lying in one corner of the room is a beautifully carved crystal skull. It appears to be grinning at you rather nastily.
+You have entered the Land of the Living Dead.Thousands of lost souls can be heard weeping and moaning. In the corner are stacked the remains of dozens of previous adventurers less fortunate than yourself. A passage exits to the north.
+Lying in one corner of the room is a beautifully carved crystal skull.It appears to be grinning at you rather nastily.
 
->GET SKULL
+
+> GET SKULL
 Taken.
->N
+> N
 Entrance to Hades
 On the ground is a red hot bell.
 
->U
+> U
 Cave
 A gust of wind blows out your candles!
 
->N
-Mirror Room
-You are in a large square room with tall ceilings. On the south wall is an enormous mirror which fills the entire wall. There are exits on the other three sides of the room.
 
->N
+> N
+Mirror Room
+You are in a large square room with tall ceilings.On the south wall is an enormous mirror which fills the entire wall. There are exits on the other three sides of the room.
+
+
+> N
 Narrow Passage
 This is a long and narrow corridor where a long north-south passageway briefly narrows even further.
 
->N
+
+> N
 Round Room
 
->W
-East-West Passage
+> W
+East - West Passage
 
->W
+ > W
 The Troll Room
 There is a sword here.
 There is a bloody axe here.
 
->S
+> S
 Cellar
 
->U
+> U
 Living Room
 There is a brown sack here.
 Your collection of treasures consists of:    A leather bag of coins
-    A jewel-encrusted egg
-    A chalice
-    A beautiful brass bauble
-    A golden clockwork canary
-    A sceptre
-    A beautiful jeweled scarab
-    A pot of gold
-    A painting
-    A gold coffin
+    A jewel - encrusted egg
+      A chalice
+      A beautiful brass bauble
+      A golden clockwork canary
+      A sceptre
+      A beautiful jeweled scarab
+      A pot of gold
+      A painting
+      A gold coffin
 
->PUT SKULL AND BAR IN CASE
-crystal skull: Done.platinum bar: Done.
->D
+> PUT SKULL AND BAR IN CASE
+ crystal skull: Done.platinum bar: Done.
+ > D
 Cellar
 
->N
+> N
 The Troll Room
 There is a sword here.
 There is a bloody axe here.
 
->E
-East-West Passage
+> E
+East - West Passage
 
->N
+ > N
 Chasm
 
->NE
+> NE
 Reservoir South
 You are in a long room, to the north of which was formerly a lake. However, with the water level lowered, there is merely a wide stream running through the center of the room.
 There is a path along the stream to the east or west, a steep pathway climbing southwest along the edge of a chasm, and a path leading into a canyon to the southeast.
->E
+> E
 Dam
 There is a folded pile of plastic here which has a small valve attached.
 There is a wrench here.
 There is a screwdriver here.
 There is a clove of garlic here.
 
->GET GARLIC AND SCREWDRIVER
-clove of garlic: Taken.screwdriver: Taken.
->W
+> GET GARLIC AND SCREWDRIVER
+ clove of garlic: Taken.screwdriver: Taken.
+ > W
 Reservoir South
 
->N
+> N
 Reservoir
-You are on what used to be a large lake, but which is now a large mud pile. There are "shores" to the north and south.
+You are on what used to be a large lake, but which is now a large mud pile.There are ""shores"" to the north and south.
 Lying half buried in the mud is an old trunk, bulging with jewels.
 
->DROP ALL BUT TORCH
-screwdriver: Dropped.clove of garlic: Dropped.pair of candles: Dropped.black book: Dropped.matchbook: Dropped.brass lantern: Dropped.
->GET TRUNK
-Taken.
->N
-Reservoir North
-You are in a large cavernous room, the south of which was formerly a lake. However, with the water level lowered, there is merely a wide stream running through there.
-There is a slimy stairway leaving the room to the north.There is a hand-held air pump here.
 
->N
+> DROP ALL BUT TORCH
+screwdriver: Dropped.clove of garlic: Dropped.pair of candles: Dropped.black book: Dropped.matchbook: Dropped.brass lantern: Dropped.
+> GET TRUNK
+Taken.
+> N
+Reservoir North
+You are in a large cavernous room, the south of which was formerly a lake.However, with the water level lowered, there is merely a wide stream running through there.
+There is a slimy stairway leaving the room to the north.There is a hand - held air pump here.
+
+> N
 Atlantis Room
-This is an ancient room, long under water. There is an exit to the south and a staircase leading up.
+This is an ancient room, long under water.There is an exit to the south and a staircase leading up.
 On the shore lies Poseidon's own crystal trident.
 
->GET TRIDENT
+> GET TRIDENT
 Taken.
->S
+> S
 Reservoir North
-There is a hand-held air pump here.
+There is a hand - held air pump here.
+ 
 
->S
+ > S
 Reservoir
-There is a brass lantern (battery-powered) here.
-There is a matchbook whose cover says "Visit Beautiful FCD#3" here.
+There is a brass lantern(battery - powered) here.
+There is a matchbook whose cover says ""Visit Beautiful FCD#3"" here.
 There is a black book here.
 There is a pair of candles here.
 There is a clove of garlic here.
 There is a screwdriver here.
 
->S
+> S
 Reservoir South
 
->SW
+> SW
 Chasm
 
->SW
-East-West Passage
+> SW
+East - West Passage
 
->W
+ > W
 The Troll Room
 There is a sword here.
 There is a bloody axe here.
 
->S
+> S
 Cellar
 
->U
+> U
 Living Room
 There is a brown sack here.
 Your collection of treasures consists of:    A platinum bar
     A crystal skull
     A leather bag of coins
-    A jewel-encrusted egg
-    A chalice
-    A beautiful brass bauble
-    A golden clockwork canary
-    A sceptre
-    A beautiful jeweled scarab
-    A pot of gold
-    A painting
-    A gold coffin
+    A jewel - encrusted egg
+      A chalice
+      A beautiful brass bauble
+      A golden clockwork canary
+      A sceptre
+      A beautiful jeweled scarab
+      A pot of gold
+      A painting
+      A gold coffin
 
->PUT TRUNK AND TRIDENT IN CASE
-trunk of jewels: Done.crystal trident: Done.
->D
+> PUT TRUNK AND TRIDENT IN CASE
+ trunk of jewels: Done.crystal trident: Done.
+ > D
 Cellar
 
->N
+> N
 The Troll Room
 There is a sword here.
 There is a bloody axe here.
 
->E
-East-West Passage
+> E
+East - West Passage
 
->N
+ > N
 Chasm
 
->NE
+> NE
 Reservoir South
 
->N
+> N
 Reservoir
-There is a brass lantern (battery-powered) here.
-There is a matchbook whose cover says "Visit Beautiful FCD#3" here.
+There is a brass lantern(battery - powered) here.
+There is a matchbook whose cover says ""Visit Beautiful FCD#3"" here.
 There is a black book here.
 There is a pair of candles here.
 There is a clove of garlic here.
 There is a screwdriver here.
 
->GET ALL
-brass lantern: Taken.matchbook: Taken.black book: Taken.pair of candles: Taken.clove of garlic: Taken.screwdriver: Taken.
->N
+> GET ALL
+ brass lantern: Taken.matchbook: Taken.black book: Taken.pair of candles: Taken.clove of garlic: Taken.screwdriver: Taken.
+ > N
 Reservoir North
-There is a hand-held air pump here.
+There is a hand - held air pump here.
+ 
 
->N
+ > N
 Atlantis Room
 
->U
+> U
 Cave
 This is a tiny cave with entrances west and north, and a staircase leading down.
 
->N
+> N
 Mirror Room
-You are in a large square room with tall ceilings. On the south wall is an enormous mirror which fills the entire wall. There are exits on the other three sides of the room.
+You are in a large square room with tall ceilings.On the south wall is an enormous mirror which fills the entire wall. There are exits on the other three sides of the room.
 
->N
+
+> N
 Cold Passage
 This is a cold and damp corridor where a long east-west passageway turns into a southward path.
 
->W
+> W
 Slide Room
-This is a small chamber, which appears to have been part of a coal mine. On the south wall of the chamber the letters "Granite Wall" are etched in the rock. To the east is a long passage, and there is a steep metal slide twisting downward. To the north is a small opening.
+This is a small chamber, which appears to have been part of a coal mine. On the south wall of the chamber the letters ""Granite Wall"" are etched in the rock. To the east is a long passage, and there is a steep metal slide twisting downward. To the north is a small opening.
 
->N
+
+> N
 Mine Entrance
 You are standing at the entrance of what might have been a coal mine. The shaft enters the west wall, and there is another exit on the south end of the room.
 
->W
-Squeaky Room
-You are in a small room. Strange squeaky sounds may be heard coming from the passage at the north end. You may also escape to the east.
 
->DROP TORCH
+> W
+Squeaky Room
+You are in a small room.Strange squeaky sounds may be heard coming from the passage at the north end. You may also escape to the east.
+
+
+> DROP TORCH
 Dropped.
->TURN ON LAMP
+> TURN ON LAMP
 The brass lantern is now on.
 
->N
+> N
 Bat Room
 You are in a small room which has doors only to the east and south.In the corner of the room on the ceiling is a large vampire bat who is obviously deranged and holding his nose.There is an exquisite jade figurine here.
 
->GET FIGURINE
-Taken.
->S
-Squeaky Room
-There is a torch here (providing light).
 
->DROP FIGURINE
+> GET FIGURINE
+Taken.
+> S
+Squeaky Room
+There is a torch here(providing light).
+
+
+> DROP FIGURINE
 Dropped.
->N
+> N
 Bat Room
 In the corner of the room on the ceiling is a large vampire bat who is obviously deranged and holding his nose.
->E
+> E
 Shaft Room
-This is a large room, in the middle of which is a small shaft descending through the floor into darkness below. To the west and the north are exits from this room. Constructed over the top of the shaft is a metal framework to which a heavy iron chain is attached.
+This is a large room, in the middle of which is a small shaft descending through the floor into darkness below. To the west and the north are exits from this room.Constructed over the top of the shaft is a metal framework to which a heavy iron chain is attached.
 At the end of the chain is a basket.
 
->DROP ALL BUT LAMP AND GARLIC
-screwdriver: Dropped.pair of candles: Dropped.black book: Dropped.matchbook: Dropped.
->N
+> DROP ALL BUT LAMP AND GARLIC
+ screwdriver: Dropped.pair of candles: Dropped.black book: Dropped.matchbook: Dropped.
+ > N
 Smelly Room
-This is a small non-descript room. However, from the direction of a small descending staircase a foul odor can be detected. To the south is a narrow tunnel.
+This is a small non - descript room.However, from the direction of a small descending staircase a foul odor can be detected. To the south is a narrow tunnel.
 
->D
+> D
 Gas Room
-This is a small room which smells strongly of coal gas. There is a short climb up some stairs and a narrow tunnel leading east.
-There is a sapphire-encrusted bracelet here.
+This is a small room which smells strongly of coal gas.There is a short climb up some stairs and a narrow tunnel leading east.
+There is a sapphire - encrusted bracelet here.
 
->E
+> E
 Coal Mine
-This is a non-descript part of a coal mine.
+This is a non - descript part of a coal mine.
+ 
 
->NE
+ > NE
 Coal Mine
-This is a non-descript part of a coal mine.
+This is a non - descript part of a coal mine.
+ 
 
->SE
+ > SE
 Coal Mine
-This is a non-descript part of a coal mine.
+This is a non - descript part of a coal mine.
+ 
 
->SW
+ > SW
 Coal Mine
-This is a non-descript part of a coal mine.
+This is a non - descript part of a coal mine.
+ 
 
->D
+ > D
 Ladder Top
-This is a very small room. In the corner is a rickety wooden ladder, leading downward. It might be safe to descend. There is also a staircase leading upward.
+This is a very small room. In the corner is a rickety wooden ladder, leading downward.It might be safe to descend. There is also a staircase leading upward.
 
->D
+
+> D
 Ladder Bottom
-This is a rather wide room. On one side is the bottom of a narrow wooden ladder. To the west and the south are passages leaving the room.
+This is a rather wide room. On one side is the bottom of a narrow wooden ladder.To the west and the south are passages leaving the room.
 
->S
+
+> S
 Dead End
 You have come to a dead end in the mine.
 There is a small pile of coal here.
 
->GET COAL
+> GET COAL
 Taken.
->N
+> N
 Ladder Bottom
 
->U
+> U
 Ladder Top
 
->U
+> U
 Coal Mine
 
->N
+> N
 Coal Mine
 
->E
+> E
 Coal Mine
 
->S
+> S
 Coal Mine
 
->N
+> N
 Gas Room
-There is a sapphire-encrusted bracelet here.
+There is a sapphire - encrusted bracelet here.
 
->U
+> U
 Smelly Room
 
->S
+> S
 Shaft Room
-There is a matchbook whose cover says "Visit Beautiful FCD#3" here.
+There is a matchbook whose cover says ""Visit Beautiful FCD#3"" here.
 There is a black book here.
 There is a pair of candles here.
 There is a screwdriver here.
 At the end of the chain is a basket.
 
->GET ALL
-matchbook: Taken.black book: Taken.pair of candles: Taken.screwdriver: Taken.basket: The cage is securely fastened to the iron chain.
->PUT COAL AND SCREWDRIVER IN BASKET
-small pile of coal: Done.screwdriver: Done.
->LIGHT MATCH
-One of the matches starts to burn.
+> GET ALL
+ matchbook: Taken.black book: Taken.pair of candles: Taken.screwdriver: Taken.basket: The cage is securely fastened to the iron chain.
+> PUT COAL AND SCREWDRIVER IN BASKET
+ small pile of coal: Done.screwdriver: Done.
+ > LIGHT MATCH
+  One of the matches starts to burn.
 
->LIGHT CANDLES WITH MATCH
-The candles are lit.
+> LIGHT CANDLES WITH MATCH
+ The candles are lit.
 The match has gone out.
 
->PUT CANDLES IN BASKET
+> PUT CANDLES IN BASKET
 Done.
->LOWER BASKET
+> LOWER BASKET
 The basket is lowered to the bottom of the shaft.
 
->DROP MATCHBOOK
+> DROP MATCHBOOK
 Dropped.
->N
+> N
 Smelly Room
 
->D
+> D
 Gas Room
-There is a sapphire-encrusted bracelet here.
+There is a sapphire - encrusted bracelet here.
 
->E
+> E
 Coal Mine
 
->NE
+> NE
 Coal Mine
 
->SE
+> SE
 Coal Mine
 
->SW
+> SW
 Coal Mine
 
->D
+> D
 Ladder Top
 
->D
+> D
 Ladder Bottom
 
->W
+> W
 Timber Room
-This is a long and narrow passage, which is cluttered with broken timbers. A wide passage comes from the east and turns at the west end of the room into a very narrow passageway. From the west comes a strong draft.
+This is a long and narrow passage, which is cluttered with broken timbers. A wide passage comes from the east and turns at the west end of the room into a very narrow passageway.From the west comes a strong draft.
 There is a broken timber here.
 
->DROP ALL
-black book: Dropped.clove of garlic: Dropped.brass lantern: Dropped.
->W
+> DROP ALL
+ black book: Dropped.clove of garlic: Dropped.brass lantern: Dropped.
+ > W
 Drafty Room
 This is a small drafty room in which is the bottom of a long shaft. To the south is a passageway and to the east a very narrow passage. In the shaft can be seen a heavy iron chain.
 At the end of the chain is a basket.
-The basket contains:  A pair of candles (providing light)
+The basket contains: A pair of candles(providing light)
   A screwdriver
   A small pile of coal
 
->GET COAL AND CANDLES AND SCREWDRIVER
-small pile of coal: Taken.pair of candles: Taken.screwdriver: Taken.
->S
+> GET COAL AND CANDLES AND SCREWDRIVER
+ small pile of coal: Taken.pair of candles: Taken.screwdriver: Taken.
+ > S
 Machine Room
-This is a large, cold room whose sole exit is to the north. In one corner there is a machine which is reminiscent of a clothes dryer. On its face is a switch which is labelled "START". The switch does not appear to be manipulable by any human hand (unless the fingers are about 1/16 by 1/4 inch). On the front of the machine is a large lid, which is closed.
+This is a large, cold room whose sole exit is to the north.In one corner there is a machine which is reminiscent of a clothes dryer.On its face is a switch which is labelled ""START"".The switch does not appear to be manipulable by any human hand(unless the fingers are about 1 / 16 by 1 / 4 inch).On the front of the machine is a large lid, which is closed.
 
->OPEN LID
+
+> OPEN LID
 The lid opens.
 
->PUT COAL IN MACHINE
+> PUT COAL IN MACHINE
 Done.
->CLOSE LID
+> CLOSE LID
 The lid closes.
 
->TURN SWITCH WITH SCREWDRIVER
-The machine comes to life (figuratively) with a dazzling display of colored lights and bizarre noises. After a few moments, the excitement abates.
+> TURN SWITCH WITH SCREWDRIVER
+ The machine comes to life(figuratively) with a dazzling display of colored lights and bizarre noises. After a few moments, the excitement abates.
 
->DROP SCREWDRIVER
+> DROP SCREWDRIVER
 Dropped.
->OPEN LID
+> OPEN LID
 The lid opens, revealing a huge diamond.
 
->GET DIAMOND
+> GET DIAMOND
 Taken.
->N
+> N
 Drafty Room
 At the end of the chain is a basket.
 
->PUT DIAMOND IN BASKET
+> PUT DIAMOND IN BASKET
 Done.
->DROP CANDLES
+> DROP CANDLES
 Dropped.
->E
+> E
 Timber Room
-There is a brass lantern (battery-powered) here.
+There is a brass lantern(battery - powered) here.
 There is a clove of garlic here.
 There is a black book here.
 There is a broken timber here.
 
->GET ALL BUT TIMBER
-brass lantern: Taken.clove of garlic: Taken.black book: Taken.
->E
+> GET ALL BUT TIMBER
+ brass lantern: Taken.clove of garlic: Taken.black book: Taken.
+ > E
 Ladder Bottom
 
->U
+> U
 Ladder Top
 
->U
+> U
 Coal Mine
 
->N
+> N
 Coal Mine
 
->E
+> E
 Coal Mine
 
->S
+> S
 Coal Mine
 
->N
+> N
 Gas Room
-There is a sapphire-encrusted bracelet here.
+There is a sapphire - encrusted bracelet here.
 
->GET SAPPHIRE
+> GET SAPPHIRE
 Taken.
->U
+> U
 Smelly Room
 
->S
+> S
 Shaft Room
-There is a matchbook whose cover says "Visit Beautiful FCD#3" here.
+There is a matchbook whose cover says ""Visit Beautiful FCD#3"" here.
 From the chain is suspended a basket.
 
->RAISE BASKET
+
+> RAISE BASKET
 The basket is raised to the top of the shaft.
->GET DIAMOND
+> GET DIAMOND
 Taken.
->W
+> W
 Bat Room
 In the corner of the room on the ceiling is a large vampire bat who is obviously deranged and holding his nose.
->S
+> S
 Squeaky Room
 There is an exquisite jade figurine here.
-There is a torch here (providing light).
+There is a torch here(providing light).
 
->GET ALL
+
+> GET ALL
 jade figurine: Taken.torch: Taken.
->E
+> E
 Mine Entrance
 
->S
+> S
 Slide Room
 
->D
+> D
 Cellar
 
->U
+> U
 Living Room
 There is a brown sack here.
 Your collection of treasures consists of:    A crystal trident
@@ -1280,139 +1333,142 @@ Your collection of treasures consists of:    A crystal trident
     A painting
     A gold coffin
 
->DROP GARLIC
+> DROP GARLIC
 Dropped.
->PUT ALL BUT LAMP IN CASE
-torch: Done.jade figurine: Done.huge diamond: Done.sapphire-encrusted bracelet: Done.black book: Done.
->D
+> PUT ALL BUT LAMP IN CASE
+torch: Done.jade figurine: Done.huge diamond: Done.sapphire - encrusted bracelet: Done.black book: Done.
+  > D
 Cellar
 
->N
+> N
 The Troll Room
 There is a sword here.
 There is a bloody axe here.
 
->E
-East-West Passage
+> E
+East - West Passage
 
->N
+ > N
 Chasm
 
->NE
+> NE
 Reservoir South
 
->N
+> N
 Reservoir
 
->N
+> N
 Reservoir North
-There is a hand-held air pump here.
+There is a hand - held air pump here.
+ 
 
->GET PUMP
+ > GET PUMP
 Taken.
->S
+> S
 Reservoir
 
->S
+> S
 Reservoir South
 
->E
+> E
 Dam
 There is a folded pile of plastic here which has a small valve attached.
 There is a wrench here.
 
->GET PLASTIC
+> GET PLASTIC
 Taken.
->S
+> S
 Deep Canyon
 You are on the south edge of a deep canyon. Passages lead off to the east, northwest and southwest. A stairway leads down. You can hear the sound of flowing water from below.
 
->D
+
+> D
 Loud Room
 
->E
+> E
 Damp Cave
 This cave has exits to the west and east, and narrows to a crack toward the south. The earth is particularly damp here.
 
->E
+
+> E
 White Cliffs Beach
 You are on a narrow strip of beach which runs along the base of the White Cliffs. There is a narrow path heading south along the Cliffs and a tight passage leading west into the cliffs themselves.
 
->S
+> S
 White Cliffs Beach
 You are on a rocky, narrow strip of beach beside the Cliffs. A narrow path leads north along the shore.
 
->DROP PLASTIC
+> DROP PLASTIC
 Dropped.
->INFLATE PLASTIC
-(with the hand-held air pump)
+> INFLATE PLASTIC
+(with the hand - held air pump)
 The boat inflates and appears seaworthy.
 A tan label is lying inside the boat.
 
->DROP PUMP
+> DROP PUMP
 Dropped.
->ENTER BOAT
+> ENTER BOAT
 You are now in the magic boat.
 
->LAUNCH
+> LAUNCH
 (magic boat)
 Frigid River, in the magic boat
-The river is running faster here and the sound ahead appears to be that of rushing water. On the east shore is a sandy beach. A small area of beach can also be seen below the cliffs on the west shore.
-There is a red buoy here (probably a warning).
+The river is running faster here and the sound ahead appears to be that of rushing water. On the east shore is a sandy beach.A small area of beach can also be seen below the cliffs on the west shore.
+There is a red buoy here(probably a warning).
 The magic boat contains:  A tan label
 
->GET BUOY
+> GET BUOY
 Taken.The flow of the river carries you downstream.
 
 Frigid River, in the magic boat
-The sound of rushing water is nearly unbearable here. On the east shore is a large landing area.
+The sound of rushing water is nearly unbearable here.On the east shore is a large landing area.
 The magic boat contains:  A tan label
 
->LAND
+> LAND
 The magic boat comes to a rest on the shore.
 
 Shore, in the magic boat
-The magic boat contains:  A tan label
+The magic boat contains: A tan label
 
->GET OUT OF BOAT
+> GET OUT OF BOAT
 You are on your own feet again.
 
->S
+> S
 Aragain Falls
 
->W
+> W
 On the Rainbow
 
->W
+> W
 End of Rainbow
 
->SW
+> SW
 Canyon Bottom
 
->U
+> U
 Rocky Ledge
 
->U
+> U
 Canyon View
 
->NW
+> NW
 Clearing
 
->W
+> W
 Behind House
 
->W
+> W
 Kitchen
 
->W
+> W
 Living Room
 There is a clove of garlic here.
 There is a brown sack here.
 Your collection of treasures consists of:    A black book
-    A sapphire-encrusted bracelet
-    A huge diamond
+    A sapphire - encrusted bracelet
+      A huge diamond
     A jade figurine
-    A torch (providing light)
+    A torch(providing light)
     A crystal trident
     A trunk of jewels
     A platinum bar
@@ -1428,39 +1484,38 @@ Your collection of treasures consists of:    A black book
     A painting
     A gold coffin
 
->OPEN BUOY
-Opening the red buoy reveals a large emerald.
->PUT EMERALD IN CASE
-Done.An almost inaudible voice whispers in your ear, "Look to your treasures for the final secret."
->E
+> OPEN BUOY
+ Opening the red buoy reveals a large emerald.
+ > PUT EMERALD IN CASE
+Done.An almost inaudible voice whispers in your ear, ""Look to your treasures for the final secret.""
+> E
 Kitchen
 
->E
+> E
 Behind House
 
->N
+> N
 North of House
 
->W
+> W
 West of House
 You are standing in an open field west of a white house, with a boarded front door. A secret path leads southwest into the forest.
 There is a small mailbox here.
 
->SW
+> SW
 Stone Barrow
-You are standing in front of a massive barrow of stone. In the east face is a huge stone door which is open. You cannot see into the dark of the tomb.
+You are standing in front of a massive barrow of stone.In the east face is a huge stone door which is open.You cannot see into the dark of the tomb.
 
->W
+
+> W
 Inside the Barrow
-As you enter the barrow, the door closes inexorably behind you. Around you it is dark, but ahead is an enormous cavern, brightly lit. Through its center runs a wide stream. Spanning the stream is a small wooden footbridge, and beyond a path leads into a dark tunnel. Above the bridge, floating in the air, is a large sign. It reads:  All ye who stand before this bridge have completed a great and perilous adventure which has tested your wit and courage. You have mastered the first part of the ZORK trilogy. Those who pass over this bridge must be prepared to undertake an even greater adventure that will severely test your skill and bravery!
+As you enter the barrow, the door closes inexorably behind you.Around you it is dark, but ahead is an enormous cavern, brightly lit. Through its center runs a wide stream.Spanning the stream is a small wooden footbridge, and beyond a path leads into a dark tunnel. Above the bridge, floating in the air, is a large sign.It reads:  All ye who stand before this bridge have completed a great and perilous adventure which has tested your wit and courage.You have mastered the first part of the ZORK trilogy. Those who pass over this bridge must be prepared to undertake an even greater adventure that will severely test your skill and bravery!
 
-The ZORK trilogy continues with "ZORK II: The Wizard of Frobozz" and is completed in "ZORK III: The Dungeon Master."
-Your score is 350 (total of 350 points), in 355 moves.
-This gives you the rank of Master Adventurer.
-]]>
+The ZORK trilogy continues with ""ZORK II: The Wizard of Frobozz"" and is completed in ""ZORK III: The Dungeon Master.""
+Your score is 350(total of 350 points), in 355 moves.
+This gives you the rank of Master Adventurer.";
 
-        Dim script =
-        <![CDATA[
+            string script = @"
 N
 N
 U
@@ -1818,33 +1873,32 @@ E
 N
 W
 SW
-W
-]]>
+W";
 
-        Await Test(Zork1, script, expected)
-    End Function
+            await TestAsync(Zork1, script, expected);
+        }
 
-    Private Function Test(gameName As String, expected As XCData) As Task
-        Return Test(gameName, Nothing, expected)
-    End Function
+        private Task TestAsync(string gameName, string expected)
+            => TestAsync(gameName, null, expected);
 
-    Private Async Function Test(gameName As String, script As XCData, expected As XCData) As Task
-        Dim memory = GameMemory(gameName)
-        Dim machine = New Machine(memory, debugging:=False)
+        private async Task TestAsync(string gameName, string script, string expected)
+        {
+            var memory = GameMemory(gameName);
+            var machine = new Machine(memory, debugging: false);
 
-        machine.Randomize(42)
+            machine.Randomize(42);
 
-        Dim screen = New MockScreen(script)
-        machine.RegisterScreen(screen)
+            var screen = new MockScreen(script);
+            machine.RegisterScreen(screen);
+            try
+            {
+                await machine.RunAsync();
+            }
+            catch (Exceptions.ZMachineQuitException)
+            {
+            }
 
-        Try
-            Await machine.RunAsync()
-        Catch ex As Exceptions.ZMachineQuitException
-        End Try
-
-        Dim expectedText = expected.Value.Trim()
-
-        Assert.Equal(expectedText, screen.Output.Trim())
-    End Function
-
-End Class
+            Assert.True(expected.AsSpan().Trim().SequenceEqual(screen.Output.AsSpan().Trim()), "Screen output did not match expected text.");
+        }
+    }
+}

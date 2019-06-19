@@ -2,10 +2,7 @@
 
 open System
 open System.IO
-open System.Buffers
-open System.Runtime.InteropServices
 open NZag.Utilities
-open NZag.CSharp.MiscUtil
 
 type IMemoryReader =
     /// Read the next byte without incrementing the address

@@ -7,7 +7,7 @@ open NZag.Utilities
 
 type TypeArray =
 
-    static member Empty : Type[] = [||]
+    static member Empty : Type[] = Array.Empty()
     static member One<'T>() = [|typeof<'T>|]
     static member Two<'T1,'T2>() = [|typeof<'T1>; typeof<'T2>|]
     static member Three<'T1,'T2,'T3>() = [|typeof<'T1>; typeof<'T2>; typeof<'T3>|]
@@ -182,7 +182,7 @@ type ILBuilder (generator: ILGenerator) =
         | i -> if i >= 4 && i <= 255 then generator.Emit(OpCodes.Stloc_S, local)
                else generator.Emit(OpCodes.Stloc, local)
 
-    member x.Arguments =
+    member val Arguments =
         { new IArguments with
             member y.LoadMachine() =
                 generator.Emit(OpCodes.Ldarg_0)
@@ -201,7 +201,7 @@ type ILBuilder (generator: ILGenerator) =
             member y.LoadArgCount() =
                 generator.Emit(OpCodes.Ldarg_S, 6uy) }
 
-    member x.EvaluationStack =
+    member val EvaluationStack =
         { new IEvaluationStack with
             member y.Load(value: bool) =
                 if value then loadInt32 1
@@ -219,7 +219,7 @@ type ILBuilder (generator: ILGenerator) =
             member y.Pop() =
                 generator.Emit(OpCodes.Pop) }
 
-    member x.Math =
+    member val Math =
         { new IMath with
             member y.Add() =
                 generator.Emit(OpCodes.Add)
@@ -271,7 +271,7 @@ type ILBuilder (generator: ILGenerator) =
             member y.Negate() =
                 generator.Emit(OpCodes.Neg) }
 
-    member x.Compare =
+    member val Compare =
         { new ICompare with
             member y.Equal() =
                 generator.Emit(OpCodes.Ceq)
@@ -292,7 +292,7 @@ type ILBuilder (generator: ILGenerator) =
                 loadInt32 0
                 generator.Emit(OpCodes.Ceq) }
 
-    member x.Convert =
+    member val Convert =
         { new IConvert with
             member y.ToByte() =
                 generator.Emit(OpCodes.Conv_U1)
@@ -301,7 +301,7 @@ type ILBuilder (generator: ILGenerator) =
             member y.ToUInt16() =
                 generator.Emit(OpCodes.Conv_U2)}
 
-    member x.Arrays =
+    member val Arrays =
         { new IArrays with
             member y.LoadUInt16() =
                 generator.Emit(OpCodes.Ldelem_U2)

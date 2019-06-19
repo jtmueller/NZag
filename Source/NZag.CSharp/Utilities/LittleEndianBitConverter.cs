@@ -1,7 +1,7 @@
 
 using System;
 
-namespace NZag.CSharp.MiscUtil
+namespace NZag.Utilities
 {
     /// <summary>
     /// Implementation of EndianBitConverter which converts to/from little-endian

@@ -2,7 +2,7 @@ using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 
-namespace NZag.CSharp.MiscUtil
+namespace NZag.Utilities
 {
     /// <summary>
     /// Equivalent of System.BitConverter, but with either endianness.
@@ -281,6 +281,9 @@ namespace NZag.CSharp.MiscUtil
         /// <param name="index">The first index into the array to copy the bytes into</param>
         public void CopyBytes(decimal value, Span<byte> buffer)
         {
+            if (buffer.Length < 16)
+                throw new ArgumentOutOfRangeException(nameof(buffer), "Buffer too small to hold 16 bytes.");
+
             int[] parts = Decimal.GetBits(value);
             for (int i = 0; i < 4; i++)
             {
