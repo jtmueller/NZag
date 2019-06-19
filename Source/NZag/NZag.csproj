@@ -13,6 +13,9 @@
   <PropertyGroup>
     <ApplicationIcon>Z.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.ComponentModel.Composition" Version="4.6.0-preview6.19303.8" />
     <PackageReference Include="Microsoft.CSharp" Version="4.6.0-preview6.19303.8" />

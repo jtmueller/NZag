@@ -1,11 +1,14 @@
-﻿using NZag.Services;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
+using NZag.Services;
 
 namespace NZag.Windows
 {
     internal class ZPairWindow : ZWindow
     {
+        private ZWindow _child1;
+        private ZWindow _child2;
+
         public ZPairWindow(
             ZWindowManager manager,
             FontAndColorService fontAndColorService,
@@ -15,34 +18,34 @@ namespace NZag.Windows
             GridLength child2Size)
             : base(manager, fontAndColorService)
         {
-            Child1 = child1;
-            Child2 = child2;
+            _child1 = child1;
+            _child2 = child2;
 
             switch (child2Position)
             {
                 case ZWindowPosition.Left:
                     ColumnDefinitions.Add(new ColumnDefinition { Width = child2Size });
                     ColumnDefinitions.Add(new ColumnDefinition());
-                    SetColumn(Child1, 1);
-                    SetColumn(Child2, 0);
+                    SetColumn(_child1, 1);
+                    SetColumn(_child2, 0);
                     break;
                 case ZWindowPosition.Right:
                     ColumnDefinitions.Add(new ColumnDefinition());
                     ColumnDefinitions.Add(new ColumnDefinition { Width = child2Size });
-                    SetColumn(Child1, 0);
-                    SetColumn(Child2, 1);
+                    SetColumn(_child1, 0);
+                    SetColumn(_child2, 1);
                     break;
                 case ZWindowPosition.Above:
                     RowDefinitions.Add(new RowDefinition { Height = child2Size });
                     RowDefinitions.Add(new RowDefinition());
-                    SetRow(Child1, 1);
-                    SetRow(Child2, 0);
+                    SetRow(_child1, 1);
+                    SetRow(_child2, 0);
                     break;
                 case ZWindowPosition.Below:
                     RowDefinitions.Add(new RowDefinition());
                     RowDefinitions.Add(new RowDefinition { Height = child2Size });
-                    SetRow(Child1, 0);
-                    SetRow(Child2, 1);
+                    SetRow(_child1, 0);
+                    SetRow(_child2, 1);
                     break;
             }
 
@@ -55,24 +58,29 @@ namespace NZag.Windows
 
         public void Replace(ZWindow child, ZWindow newChild)
         {
-            if (Child1.Equals(child))
+            if (ReferenceEquals(this, newChild))
+                return;
+
+            if (_child1.Equals(child))
             {
-                Child1 = newChild;
-                Child1.SetParentWindow(null);
-                Children[0] = newChild;
+                Children.Remove(_child1);
+                _child1.SetParentWindow(null);
+                _child1 = newChild;
+                Children.Add(newChild);
                 newChild.SetParentWindow(this);
             }
-            else if (Child2.Equals(child))
+            else if (_child2.Equals(child))
             {
-                Child2 = newChild;
-                Child2.SetParentWindow(null);
-                Children[0] = newChild;
+                Children.Remove(_child2);
+                _child2.SetParentWindow(null);
+                _child2 = newChild;
+                Children.Add(newChild);
                 newChild.SetParentWindow(this);
             }
         }
 
-        public ZWindow Child1 { get; private set; }
+        public ZWindow Child1 => _child1;
 
-        public ZWindow Child2 { get; private set; }
+        public ZWindow Child2 => _child2;
     }
 }

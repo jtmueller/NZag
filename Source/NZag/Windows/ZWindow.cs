@@ -10,16 +10,16 @@ namespace NZag.Windows
     internal abstract class ZWindow : Grid
     {
         protected readonly ZWindowManager Manager;
-        private readonly FontAndColorService fontAndColorService;
-        private readonly ForegroundThreadAffinitizedObject foregroundThreadAffinitizedObject;
+        private readonly FontAndColorService _fontAndColorService;
+        private readonly ForegroundThreadAffinitizedObject _foregroundThread;
 
-        private ZPairWindow parentWindow;
+        private ZPairWindow _parentWindow;
 
         protected ZWindow(ZWindowManager manager, FontAndColorService fontAndColorService)
         {
             Manager = manager;
-            this.fontAndColorService = fontAndColorService;
-            foregroundThreadAffinitizedObject = new ForegroundThreadAffinitizedObject();
+            _fontAndColorService = fontAndColorService;
+            _foregroundThread = new ForegroundThreadAffinitizedObject();
 
             UseLayoutRounding = true;
             SnapsToDevicePixels = true;
@@ -28,17 +28,17 @@ namespace NZag.Windows
             TextOptions.SetTextRenderingMode(this, TextRenderingMode.Auto);
         }
 
-        protected void AssertIsForeground() => foregroundThreadAffinitizedObject.AssertIsForeground();
+        protected void AssertIsForeground() => _foregroundThread.AssertIsForeground();
 
-        public ZPairWindow ParentWindow => parentWindow;
+        public ZPairWindow ParentWindow => _parentWindow;
 
-        protected Brush ForegroundBrush => fontAndColorService.ForegroundBrush;
+        protected Brush ForegroundBrush => _fontAndColorService.ForegroundBrush;
 
-        protected Brush BackgroundBrush => fontAndColorService.BackgroundBrush;
+        protected Brush BackgroundBrush => _fontAndColorService.BackgroundBrush;
 
-        protected double FontSize => fontAndColorService.FontSize;
+        protected double FontSize => _fontAndColorService.FontSize;
 
-        public void SetParentWindow(ZPairWindow newParentWindow) => parentWindow = newParentWindow;
+        public void SetParentWindow(ZPairWindow newParentWindow) => _parentWindow = newParentWindow;
 
         public void Activate() => Manager.ActivateWindow(this);
 
@@ -56,20 +56,14 @@ namespace NZag.Windows
 
         public Task<char> ReadCharAsync()
         {
-            return foregroundThreadAffinitizedObject.InvokeBelowInputPriority(() =>
-            {
-                return ReadCharCoreAsync();
-            }).Unwrap();
+            return _foregroundThread.InvokeBelowInputPriority(ReadCharCoreAsync).Unwrap();
         }
 
         protected virtual Task<string> ReadTextCoreAsync(int maxChars) => throw new Exceptions.RuntimeException("Window does not support user input.");
 
         public Task<string> ReadTextAsync(int maxChars)
         {
-            return foregroundThreadAffinitizedObject.InvokeBelowInputPriority(() =>
-            {
-                return ReadTextCoreAsync(maxChars);
-            }).Unwrap();
+            return _foregroundThread.InvokeBelowInputPriority(() => ReadTextCoreAsync(maxChars)).Unwrap();
         }
 
         public virtual void PutChar(char ch, bool forceFixedWidthFont) => throw new Exceptions.RuntimeException("Window does not support text display.");

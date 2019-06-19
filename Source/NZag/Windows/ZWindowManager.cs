@@ -36,7 +36,7 @@ namespace NZag.Windows
 
             if (RootWindow != null && splitWindow == null)
             {
-                throw new InvalidOperationException("Cannot open a new root window if the root window has already bee created.");
+                throw new InvalidOperationException("Cannot open a new root window if the root window has already been created.");
             }
 
             var newWindow = CreateNewWindow(kind);

@@ -9,11 +9,11 @@ namespace NZag.Controls
     public class ZTextGrid : FrameworkElement
     {
         private readonly VisualCollection _visuals;
-        private readonly SortedList<Tuple<int, int>, VisualPair> _visualPairs;
+        private readonly SortedList<(int, int), VisualPair> _visualPairs;
 
         private readonly double _fontSize;
         private readonly Size _fontCharSize;
-        private Typeface typeface;
+        private Typeface _typeface;
         private bool _bold;
         private bool _italic;
         private bool _reverse;
@@ -21,7 +21,7 @@ namespace NZag.Controls
         public ZTextGrid(double fontSize)
         {
             _visuals = new VisualCollection(this);
-            _visualPairs = new SortedList<Tuple<int, int>, VisualPair>();
+            _visualPairs = new SortedList<(int, int), VisualPair>();
 
             _fontSize = fontSize;
 
@@ -39,14 +39,14 @@ namespace NZag.Controls
 
         private Typeface GetTypeface()
         {
-            if (typeface == null)
+            if (_typeface == null)
             {
                 var style = _italic ? FontStyles.Italic : FontStyles.Normal;
                 var weight = _bold ? FontWeights.Bold : FontWeights.Normal;
-                typeface = new Typeface(new FontFamily("Consolas"), style, weight, stretch: FontStretches.Normal);
+                _typeface = new Typeface(new FontFamily("Consolas"), style, weight, stretch: FontStretches.Normal);
             }
 
-            return typeface;
+            return _typeface;
         }
 
         public void Clear()
@@ -68,10 +68,9 @@ namespace NZag.Controls
             {
                 // First, see if we've already inserted something at this position.
                 // If so, delete the old visuals.
-                var cursorPos = Tuple.Create(CursorColumn, CursorLine);
-                if (_visualPairs.ContainsKey(cursorPos))
+                var cursorPos = (CursorColumn, CursorLine);
+                if (_visualPairs.TryGetValue(cursorPos, out var visualPair))
                 {
-                    var visualPair = _visualPairs[cursorPos];
                     _visuals.Remove(visualPair.Background);
                     _visuals.Remove(visualPair.Character);
                     _visualPairs.Remove(cursorPos);
@@ -123,13 +122,13 @@ namespace NZag.Controls
         public void SetBold(bool value)
         {
             _bold = value;
-            typeface = null;
+            _typeface = null;
         }
 
         public void SetItalic(bool value)
         {
             _italic = value;
-            typeface = null;
+            _typeface = null;
         }
 
         public void SetReverse(bool value) => _reverse = value;
@@ -149,7 +148,7 @@ namespace NZag.Controls
             for (int i = _visualPairs.Count - 1; i >= 0; i--)
             {
                 var cursorPos = _visualPairs.Keys[i];
-                int y = cursorPos.Item2;
+                var (_, y) = cursorPos;
                 if (y > lines - 1)
                 {
                     var visualPair = _visualPairs[cursorPos];
