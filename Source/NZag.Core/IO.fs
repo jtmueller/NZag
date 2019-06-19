@@ -128,21 +128,23 @@ type MemoryOutputStream(memory: Memory, address: int) =
 
     interface IOutputStream with
         member x.WriteCharAsync ch =
-            Task.Run(fun () ->
-                memory.WriteByte(writeAddress(), charToByte ch)
-                count <- count + 1us
-                writeCount()
-            )
+            memory.WriteByte(writeAddress(), charToByte ch)
+            count <- count + 1us
+            writeCount()
+            Task.CompletedTask
 
         member x.WriteTextAsync(s: string) =
             Task.Run(fun () ->
                 let chars = s.AsSpan()
                 let buffer = ArrayPool<byte>.Shared.Rent(chars.Length)
-                for i = 0 to chars.Length - 1 do
-                    buffer.[i] <- charToByte chars.[i]
-                memory.WriteBytes(writeAddress(), ReadOnlySpan(buffer, 0, chars.Length))
-                count <- count + (uint16 chars.Length)
-                writeCount()
+                try
+                    for i = 0 to chars.Length - 1 do
+                        buffer.[i] <- charToByte chars.[i]
+                    memory.WriteBytes(writeAddress(), ReadOnlySpan(buffer, 0, chars.Length))
+                    count <- count + (uint16 chars.Length)
+                    writeCount()
+                finally
+                    ArrayPool<byte>.Shared.Return(buffer)
             )
 
 type OutputStreamCollection(memory: Memory) =
