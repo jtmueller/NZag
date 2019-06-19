@@ -39,7 +39,7 @@ module Dictionary =
 
         let mutable lower = 0
         let mutable upper = int entryCount - 1
-        let mutable result = None
+        let mutable result = ValueNone
 
         while result.IsNone && lower <= upper do
             let entryNumber =
@@ -69,11 +69,11 @@ module Dictionary =
                     i <- i + 1
 
             if not stop then
-                result <- Some(entryAddress)
+                result <- ValueSome(entryAddress)
 
         match result with
-        | Some(entryAddress) -> entryAddress
-        | None -> 0
+        | ValueSome entryAddress -> entryAddress
+        | ValueNone -> 0
 
     let private createTokenizeWord textBuffer parseBuffer dictionaryAddress ignoreUnrecognizedWords (memory: Memory) =
         (fun start length ->
@@ -87,11 +87,10 @@ module Dictionary =
                 memory.WriteByte(address, tokenCount + 1uy)
                 address <- address + 1
 
-            let wordChars = Array.zeroCreate length
-            for i = 0 to length - 1 do
-                wordChars.[i] <- char (memory.ReadByte(textBuffer + start + i))
-
-            let word = String.fromCharArray wordChars
+            let word = String.Create(length, (length, textBuffer + start, memory), fun chars (len, offset, m) -> 
+                for i = 0 to len - 1 do
+                    chars.[i] <- char (m.ReadByte(offset + i))
+            )
 
             let wordAddress = memory |> lookupWord word dictionaryAddress
 

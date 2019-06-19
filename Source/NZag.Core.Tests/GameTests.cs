@@ -7,6 +7,11 @@ using NZag.Utilities;
 
 namespace NZag.Core.Tests
 {
+    // TODO: these tests fail with BadImageFormatException.
+    // Either something in Reflection.Emit changed in .NET Core,
+    // or the compiled expressions require a 32-bit host, and the switch to Core
+    // is forcing 64-bit.
+
     public class GameTests
     {
         [Fact]

@@ -216,7 +216,7 @@ type Machine (memory: Memory, debugging: bool) as this =
             checksum = (memory |> Header.readChecksum)
 
         member y.Randomize(seed) =
-            random <- if seed = 0s then new Random(int DateTime.Now.Ticks)
+            random <- if seed = 0s then new Random(Environment.TickCount)
                       else new Random(int +seed)
         member y.NextRandomNumber(range) =
             let minValue = 1us
