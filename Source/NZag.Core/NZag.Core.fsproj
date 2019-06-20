@@ -25,7 +25,4 @@
     <Compile Include="CodeGen.fs" />
     <Compile Include="Machine.fs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\NZag.CSharp\NZag.CSharp.csproj" />
-  </ItemGroup>
 </Project>

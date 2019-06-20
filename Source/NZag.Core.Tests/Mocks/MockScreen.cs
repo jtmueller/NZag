@@ -20,8 +20,6 @@ namespace NZag.Core.Tests.Mocks
 
         public Task<string> ReadTextAsync(int maxChars)
         {
-            if (_scriptIndex >= _script.Length)
-                return Task.FromResult(string.Empty);
             string command = _script[_scriptIndex++];
             _builder.Append(command);
             _builder.Append('\n');

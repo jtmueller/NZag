@@ -4,6 +4,18 @@ open System
 open System.IO
 open NZag.Utilities
 
+module private MemoryModule =
+    let inline readWord (bytes: ReadOnlySpan<byte>) =
+        (uint16 bytes.[0] <<< 8) ||| uint16 bytes.[1]
+
+    let inline readDWord (bytes: ReadOnlySpan<byte>) =
+        ((uint32 bytes.[0]) <<< 24) |||
+        ((uint32 bytes.[1]) <<< 16) |||
+        ((uint32 bytes.[2]) <<< 8) |||
+         (uint32 bytes.[3])
+
+open MemoryModule
+
 type IMemoryReader =
     /// Read the next byte without incrementing the address
     abstract member PeekByte : unit -> byte
@@ -36,8 +48,6 @@ type IMemoryReader =
     abstract member Memory : Memory
 
 and Memory private (stream : Stream) =
-
-    static let bitConverter = EndianBitConverter.Big
 
     // We split memory into 64k chunks to avoid creating very large arrays.
     [<Literal>]
@@ -150,20 +160,6 @@ and Memory private (stream : Stream) =
 
         currentChunk.[address - currentChunkStart] <- value
 
-    let readWord address =
-        // We take a faster path if the entire word can be read from the current chunk
-        if address >= currentChunkStart && address < currentChunkEnd - 2 then
-            let chunk = currentChunk
-            let chunkAddress = address - currentChunkStart
-
-            ((uint16 chunk.[chunkAddress]) <<< 8) |||
-             (uint16 chunk.[chunkAddress+1])
-        else
-            let b1 = readByte  address
-            let b2 = readByte (address+1)
-
-            (uint16 b1 <<< 8) ||| uint16 b2
-
     member x.Read(buffer: Span<byte>, offset, count, address) =
         if offset < 0 then
             argOutOfRange "offset" "offset is less than zero"
@@ -246,7 +242,7 @@ and Memory private (stream : Stream) =
             argOutOfRange "address" "Expected address to be in range 0 to %d" (size - 2)
 
         let bytes = x.ReadBytes(address, 2)
-        bitConverter.ToUInt16(bytes)
+        readWord bytes
 
     member x.ReadWords(address, count) =
         if (count * 2) > size then
@@ -256,8 +252,8 @@ and Memory private (stream : Stream) =
 
         let bytes = x.ReadBytes(address, count * 2)
         let words = Array.zeroCreate<uint16> count
-        for i in 0..2..bytes.Length - 1 do
-            words.[i / 2] <- bitConverter.ToUInt16(bytes.Slice(i, 2));
+        for i = 0 to count - 1 do
+            words.[i] <- readWord (bytes.Slice(i * 2, 2))
         words
 
     member x.ReadDWord address =
@@ -265,7 +261,7 @@ and Memory private (stream : Stream) =
             argOutOfRange "address" "Expected address to be in range 0 to %d" (size - 4)
 
         let bytes = x.ReadBytes(address, 4)
-        bitConverter.ToUInt32(bytes)
+        readDWord bytes
 
     member x.WriteByte(address, value) =
         if address > size - 1 then
@@ -300,8 +296,8 @@ and Memory private (stream : Stream) =
             let chunk = currentChunk
             let chunkAddress = address - currentChunkStart
 
-            let bytes = chunk.AsSpan(chunkAddress, 2)
-            bitConverter.CopyBytes(value, bytes)
+            chunk.[chunkAddress]    <- byte (value >>> 8)
+            chunk.[chunkAddress+1]  <- byte (value &&& 0xffus)
         else
             byte (value >>> 8)      |> writeByte  address
             byte (value &&& 0xffus) |> writeByte (address+1)
@@ -315,8 +311,10 @@ and Memory private (stream : Stream) =
             let chunk = currentChunk
             let chunkAddress = address - currentChunkStart
 
-            let bytes = chunk.AsSpan(chunkAddress, 4)
-            bitConverter.CopyBytes(value, bytes)
+            chunk.[chunkAddress]   <- byte (value >>> 24)
+            chunk.[chunkAddress+1] <- byte (value >>> 16)
+            chunk.[chunkAddress+2] <- byte (value >>> 8)
+            chunk.[chunkAddress+3] <- byte (value &&& 0xffu)
         else
             byte (value >>> 24)    |> writeByte  address
             byte (value >>> 16)    |> writeByte (address+1)
@@ -393,11 +391,11 @@ and Memory private (stream : Stream) =
 
             member y.NextWord() =
                 let bytes = y.NextBytes(2)
-                bitConverter.ToUInt16(bytes)
+                readWord bytes
 
             member y.NextDWord() =
                 let bytes = y.NextBytes(4)
-                bitConverter.ToUInt32(bytes)
+                readDWord bytes
 
             member y.NextBytes count =
                 if !readerAddress > size - count then
@@ -432,8 +430,8 @@ and Memory private (stream : Stream) =
             member y.NextWords count =
                 let bytes = y.NextBytes(count * 2)
                 let words = Array.zeroCreate<uint16> count
-                for i in 0..2..bytes.Length - 1 do
-                    words.[i / 2] <- bitConverter.ToUInt16(bytes.Slice(i, 2));
+                for i = 0 to count - 1 do
+                    words.[i] <- readWord (bytes.Slice(i * 2, 2))
                 words
 
             member y.SkipBytes count =
