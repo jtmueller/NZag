@@ -362,25 +362,6 @@ and Memory private (stream : Stream) =
             | None ->
                 readPastEndOfMemory()
 
-        let readNextWord() =
-            match !readerChunk with
-            | Some chunk ->
-                // We take a faster path if the entire word can be read from the current chunk
-                let rco = !readerChunkOffset
-                if rco <= ChunkSize - 2 then
-                    let result = ((uint16 chunk.[rco]) <<< 8) |||
-                                  (uint16 chunk.[rco+1])
-
-                    increment 2
-                    result
-                else
-                    let b1 = readNextByte()
-                    let b2 = readNextByte()
-
-                    (uint16 b1 <<< 8) ||| uint16 b2
-            | None ->
-                readPastEndOfMemory()
-
         let peek f =
             let oldReaderAddress = !readerAddress
             let oldReaderChunk = !readerChunk

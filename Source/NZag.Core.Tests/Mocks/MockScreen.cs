@@ -13,15 +13,16 @@ namespace NZag.Core.Tests.Mocks
         public MockScreen(string script = null)
         {
             _builder = new StringBuilder();
-            _script = script?.Split('\n', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+            _script = script?.Split("\r\n", StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
         }
 
         public Task<char> ReadCharAsync() => Task.FromResult((char)0);
 
         public Task<string> ReadTextAsync(int maxChars)
         {
-            string command = _script[_scriptIndex];
-            _scriptIndex++;
+            if (_scriptIndex >= _script.Length)
+                return Task.FromResult(string.Empty);
+            string command = _script[_scriptIndex++];
             _builder.Append(command);
             _builder.Append('\n');
             return Task.FromResult(command);
@@ -29,18 +30,14 @@ namespace NZag.Core.Tests.Mocks
 
         public Task WriteCharAsync(char ch)
         {
-            return Task.Factory.StartNew(() =>
-            {
-                _builder.Append(ch);
-            });
+            _builder.Append(ch);
+            return Task.CompletedTask;
         }
 
         public Task WriteTextAsync(string s)
         {
-            return Task.Factory.StartNew(() =>
-            {
-                _builder.Append(s);
-            });
+            _builder.Append(s);
+            return Task.CompletedTask;
         }
 
         public Task ClearAsync(int window) => Task.CompletedTask;
@@ -55,9 +52,9 @@ namespace NZag.Core.Tests.Mocks
 
         public Task ShowStatusAsync() => Task.CompletedTask;
 
-        public Task<int> GetCursorColumnAsync() => Task.FromResult<int>(0);
+        public Task<int> GetCursorColumnAsync() => Task.FromResult(0);
 
-        public Task<int> GetCursorLineAsync() => Task.FromResult<int>(0);
+        public Task<int> GetCursorLineAsync() => Task.FromResult(0);
 
         public Task SetCursorAsync(int line, int column) => Task.CompletedTask;
 

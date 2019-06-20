@@ -2,23 +2,24 @@
 
 open System
 open NZag.Utilities
+open System.Buffers
 
 module Dictionary =
 
     let readWordSeparators (dictionaryAddress: int) (memory: Memory) =
-        let count = memory.ReadByte (dictionaryAddress)
+        let count = memory.ReadByte(dictionaryAddress)
         memory.ReadBytes(dictionaryAddress + 1, int count)
 
-    let lookupWord (word: string) (dictionaryAddress: int) (memory: Memory) =
+    let lookupWord (word: ReadOnlySpan<char>) (dictionaryAddress: int) (memory: Memory) =
         let alphabetTable = new AlphabetTable(memory)
         let version = alphabetTable.Version
         let resolution = if version <= 3 then 2 else 3
 
         let word =
             if word.Length > (resolution * 3) then
-                word.AsSpan(0, resolution * 3)
+                word.Slice(0, resolution * 3)
             else
-                word.AsSpan()
+                word
 
         let encoded = ZText.encodeZText alphabetTable word
 
@@ -28,12 +29,12 @@ module Dictionary =
 
         let entryLength = reader.NextByte()
 
-        let sorted, entryCount =
+        let struct(sorted, entryCount) =
             let w = reader.NextWord()
             if (int16 w) < 0s then
-                (false, uint16 -(int16 w))
+                struct(false, uint16 -(int16 w))
             else
-                (true, w)
+                struct(true, w)
 
         let entryAddressBase = reader.Address
 
@@ -87,12 +88,16 @@ module Dictionary =
                 memory.WriteByte(address, tokenCount + 1uy)
                 address <- address + 1
 
-            let word = String.Create(length, (length, textBuffer + start, memory), fun chars (len, offset, m) -> 
-                for i = 0 to len - 1 do
-                    chars.[i] <- char (m.ReadByte(offset + i))
-            )
+            let pool = ArrayPool<char>.Shared
+            let chars = pool.Rent(length)
 
-            let wordAddress = memory |> lookupWord word dictionaryAddress
+            for i = 0 to length - 1 do
+                chars.[i] <- char (memory.ReadByte(textBuffer + start + i))
+
+            let word = Span.asReadonly (chars.AsSpan(0, length))
+            let wordAddress = lookupWord word dictionaryAddress memory
+
+            pool.Return(chars)
 
             if wordAddress <> 0 || not ignoreUnrecognizedWords then
                 address <- address + int (tokenCount * 4uy)

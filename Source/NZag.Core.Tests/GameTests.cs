@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using NZag.Core.Tests.Mocks;
@@ -17,8 +18,7 @@ namespace NZag.Core.Tests
         [Fact]
         public async Task RunCZech()
         {
-            string expected = @"
-CZECH: the Comprehensive Z-machine Emulation CHecker, version 0.8
+            string expected = @"CZECH: the Comprehensive Z-machine Emulation CHecker, version 0.8
 Test numbers appear in [brackets].
 
 print works or you wouldn't be seeing this.
@@ -74,7 +74,8 @@ Abbreviations (I love 'xyzzy' [two times]): I love 'xyzzy'  I love 'xyzzy'
 Performed 425 tests.
 Passed: 406, Failed: 0, Print tests: 19
 Didn't crash: hooray!
-Last test: quit!";
+Last test: quit!
+";
 
             await TestAsync(CZech, expected);
         }
@@ -82,8 +83,7 @@ Last test: quit!";
         [Fact]
         public async Task RunZork1()
         {
-            string expected = @"
-ZORK I: The Great Underground Empire
+            string expected = @"ZORK I: The Great Underground Empire
 Copyright (c) 1981, 1982, 1983 Infocom, Inc. All rights reserved.
 ZORK is a registered trademark of Infocom, Inc.
 Revision 88 / Serial number 840726
@@ -1518,10 +1518,10 @@ As you enter the barrow, the door closes inexorably behind you.Around you it is 
 
 The ZORK trilogy continues with ""ZORK II: The Wizard of Frobozz"" and is completed in ""ZORK III: The Dungeon Master.""
 Your score is 350(total of 350 points), in 355 moves.
-This gives you the rank of Master Adventurer.";
+This gives you the rank of Master Adventurer.
+";
 
-            string script = @"
-N
+            string script = @"N
 N
 U
 GET EGG
@@ -1903,7 +1903,9 @@ W";
             {
             }
 
-            Assert.True(expected.AsSpan().Trim().SequenceEqual(screen.Output.AsSpan().Trim()), "Screen output did not match expected text.");
+            expected = expected.Replace("\r\n", "\n");
+
+            Assert.Equal(expected, screen.Output);
         }
     }
 }

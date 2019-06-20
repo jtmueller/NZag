@@ -13,7 +13,7 @@ type IProfiler =
 type Machine (memory: Memory, debugging: bool) as this =
 
     let mainRoutineAddress = memory |> Header.readMainRoutineAddress |> int
-    let zfuncMap = Dictionary.create()
+    //let zfuncMap = Dictionary.create()
     let localArrayPool = Stack.create()
 
     let getOrCreateLocalArray() =
@@ -208,7 +208,8 @@ type Machine (memory: Memory, debugging: bool) as this =
             releaseLocalArray locals
 
         member y.Compile(routine, optimize) =
-            compile routine optimize
+            getCompiledRoutine routine optimize
+
         member y.GetInvoker(address) =
             getInvoker address
 
@@ -231,7 +232,6 @@ type Machine (memory: Memory, debugging: bool) as this =
         member y.ReadInputChar() =
             let readCharTask = screen.ReadCharAsync()
             let ch = readCharTask.Result
-
             ch
 
         member y.ReadInputText(textBuffer, parseBuffer) =
@@ -244,8 +244,6 @@ type Machine (memory: Memory, debugging: bool) as this =
             let readTextTask = screen.ReadTextAsync(maxChars)
             let text = readTextTask.Result
 
-            let text = text.ToLower()
-
             if debugging then
                 System.Diagnostics.Debug.WriteLine(sprintf "TEXT INPUT: %s" text)
 
@@ -257,7 +255,7 @@ type Machine (memory: Memory, debugging: bool) as this =
                 textAddress <- textAddress + 1
 
             for i = 0 to text.Length - 1 do
-                memory.WriteByte(textAddress + i, byte text.[i])
+                memory.WriteByte(textAddress + i, byte (Char.ToLower text.[i]))
 
             memory.WriteByte(textAddress + text.Length, 0uy)
 

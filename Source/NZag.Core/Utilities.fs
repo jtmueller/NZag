@@ -50,7 +50,7 @@ module Exceptions =
     let argOutOfRange name format =
         Printf.ksprintf (fun s -> raise <| ArgumentOutOfRangeException(name, s)) format
 
-module Measurement =
+module internal Measurement =
 
     let start() =
         Stopwatch.StartNew()
@@ -60,7 +60,7 @@ module Measurement =
         watch.Elapsed
 
 [<RequireQualifiedAccess>]
-module Async =
+module internal Async =
 
     let Raise (e: exn) =
         Async.FromContinuations(fun (_,econt,_) -> econt e)
@@ -92,7 +92,7 @@ module Async =
         work |> Async.StartAsTask :> Task
 
 [<RequireQualifiedAccess>]
-module String =
+module internal String =
 
     let replace (oldValue: string) (newValue: string) (s: string) =
         s.Replace(oldValue, newValue)
@@ -104,7 +104,7 @@ module String =
         s.ToCharArray()
 
 [<RequireQualifiedAccess>]
-module StringBuilder =
+module internal StringBuilder =
 
     let create() =
         new StringBuilder()
@@ -128,19 +128,19 @@ module StringBuilder =
         builder.AppendJoin(sep, items) |> ignore
 
 [<RequireQualifiedAccess>]
-module Enumerable =
+module internal Enumerable =
 
     let getEnumerator (e: seq<_>) =
         e.GetEnumerator()
 
 [<RequireQualifiedAccess>]
-module Enumerator =
+module internal Enumerator =
 
     let next (e : IEnumerator<_>) =
         if e.MoveNext() then ValueSome(e.Current)
         else ValueNone
 
-module Array =
+module internal Array =
 
     let clear arr =
         Array.Clear(arr, 0, arr.Length)
@@ -151,11 +151,11 @@ module Array =
     /// Converts an array into a ReadOnlySpan
     let asReadonly = (ReadOnlySpan.op_Implicit : 'a[] -> ReadOnlySpan<'a>)
 
-module Span =
+module internal Span =
     /// Converts a Span into a ReadOnlySpan
     let asReadonly = (Span.op_Implicit : Span<'a> -> ReadOnlySpan<'a>)
 
-module Collection =
+module internal Collection =
 
     let length (c : ICollection<_>) = c.Count
 
@@ -167,7 +167,7 @@ module Collection =
             i <- i + 1
         res
 
-module Dictionary =
+module internal Dictionary =
 
     let create() = new Dictionary<_,_>() :> IDictionary<_,_>
 
@@ -227,7 +227,7 @@ module Dictionary =
 
         map
 
-module SortedList =
+module internal SortedList =
 
     let create() =
         new SortedList<_,_>() :> IDictionary<_,_>
@@ -239,7 +239,7 @@ module SortedList =
 
         new SortedList<_,_>(comparer) :> IDictionary<_,_>
 
-module ResizeArray =
+module internal ResizeArray =
 
     let create() = new ResizeArray<_>()
     let createFrom (e: seq<_>) = new ResizeArray<_>(e)
@@ -264,7 +264,7 @@ module ResizeArray =
             res <- arr.[i] :: res
         res
 
-module HashSet =
+module internal HashSet =
 
     let create() = new HashSet<_>()
     let createFrom (e: seq<_>) = new HashSet<_>(e)
@@ -292,7 +292,7 @@ module HashSet =
             i <- i + 1
         arr
 
-module SortedSet =
+module internal SortedSet =
 
     let create() =
         new SortedSet<_>()
@@ -326,7 +326,7 @@ module Stack =
         if peeked then ValueSome x else ValueNone
 
 [<AutoOpen>]
-module Functions =
+module internal Functions =
 
     let memoize f =
         let map = Dictionary.create()
@@ -371,7 +371,7 @@ module Extensions =
             | b1, b2 -> ValueSome((uint16 b1 <<< 8) ||| uint16 b2)
 
 [<AutoOpen>]
-module Operators =
+module internal Operators =
     /// Calls implicit casts between types 
     let inline (!>) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit : ^a -> ^b) x)
 

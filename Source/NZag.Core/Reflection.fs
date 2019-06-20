@@ -313,7 +313,7 @@ type ILBuilder (generator: ILGenerator) =
                 generator.Emit(OpCodes.Stelem_Ref) }
 
     member x.Call(methodInfo: MethodInfo) =
-        generator.Emit(OpCodes.Call, methodInfo)
+        generator.Emit(OpCodes.Callvirt, methodInfo)
 
     member x.Return() =
         generator.Emit(OpCodes.Ret)
